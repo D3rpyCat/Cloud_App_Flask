@@ -1,0 +1,23 @@
+<link rel="stylesheet" href="/styles/login.css" type="text/css">
+
+<form action="/register/" method="post">
+    <div class="login">
+        <div class="login-screen">
+            <div class="app-title">
+                <h1>Création de compte</h1>
+            </div>
+            <div class="login-form">
+                <div class="control-group">
+                    <p>Pseudo</p>
+                    {{ form.pseudo }}
+                </div>
+                <div class="control-group">
+                    <p>Mot de passe</p>
+                    {{ form.password }}
+                    {{ form.hidden_tag() }}
+                </div>
+                <input type="submit" value="Submit">
+            </div>
+        </div>
+    </div>
+</form>
