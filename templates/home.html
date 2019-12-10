@@ -87,6 +87,40 @@
                 </script>
             </div>
         </div>
+
+        <div class="all-employees">
+            <form action="/home/" method="GET">
+                Departement : 
+                <select name="dept_no">
+                    {% for dept in dept_no_list %}
+                    {%if dept.dept_no == dept_no_chosen2 %}
+                    <option selected>{{dept.dept_no}}</option>
+                    {%else%}
+                    <option>{{dept.dept_no}}</option>
+                    {%endif%}
+                    {% endfor %}
+                </select>
+                Titre :
+                <select name="title">
+                    {% for title in title_list %}
+                    {%if title.title == title_chosen %}
+                    <option selected>{{title.title}}</option>
+                    {%else%}
+                    <option>{{title.title}}</option>
+                    {%endif%}
+                    {% endfor %}
+                </select>
+                <div>
+                    <input type="submit" value="OK">
+                </div>
+            </form>
+            <div>
+                {% for employee in dept_employees_names %}
+                <li>{{employee.first_name}} {{employee.last_name}}</li>
+                {% endfor %}
+            </div>
+
+        </div>
         {%endif%}
 
         <a href='/logout/'>Se déconnecter</a>

@@ -145,19 +145,45 @@ def home():
         if request.method == 'GET' and request.args.get('emp_emp_no') != None:
             emp_emp_no = request.args.get('emp_emp_no')
         salaries_list = employees.aggregate(
-        [{	"$match": {"emp_no":int(emp_emp_no)}},
-         {	"$unwind": {"path": "$all_salaries"}},
-            {"$project": {"all_salaries": 1.0}}])
+            [{	"$match": {"emp_no": int(emp_emp_no)}},
+             {	"$unwind": {"path": "$all_salaries"}},
+                {"$project": {"all_salaries": 1.0}}])
         labels = []
         values = []
         for s in salaries_list:
-            labels.append("["+str(s['all_salaries']['from_date'])+" - "+str(s['all_salaries']['to_date'])+"]")
+            labels.append("["+str(s['all_salaries']['from_date']) +
+                          " - "+str(s['all_salaries']['to_date'])+"]")
             values.append(s['all_salaries']['salary'])
-        if values!=[]:
+        if values != []:
             max_value = max(values)+100
         else:
             max_value = 100000
-        return render_template('home.html', name=current_user.pseudo, dept_no_list=dept_no_list, employees_names=employees_names, dept_no_chosen=dept_no, emp_emp_no=emp_emp_no,bar_labels=labels,bar_values=values,max=max_value)
+
+        # all-employees
+        title_list = []
+        all_title_list = employees.aggregate(
+            [{"$unwind": {"path": "$all_titles"}}])
+        for t in all_title_list:
+            title_list.append(t['all_titles']['title'])
+
+        if request.method == 'GET' and request.args.get('dept_no') != None and request.args.get('title') != None:
+            dept_no2 = request.args.get('dept_no')
+            title = request.args.get('title')
+        else:
+            dept_no2 = departments.find_one({}, {"dept_no": 1})['dept_no']
+            title = title_list[0]
+
+        dept_employees_names = []
+        dept_employees = employees.aggregate(
+            [{"$match": {"all_dept.dept_no": str(dept_no)}},
+             {"$unwind": {"path": "$all_titles"}},
+                {"$match": {"all_titles.title": str(title)}},
+                {"$project": {"first_name": 1.0, "last_name": 1.0}}])
+        for emp in dept_employees:
+            dept_employees_names.append(emp)
+            
+
+        return render_template('home.html', name=current_user.pseudo, dept_no_list=dept_no_list, employees_names=employees_names, dept_no_chosen=dept_no, emp_emp_no=emp_emp_no, bar_labels=labels, bar_values=values, max=max_value, dept_no_chosen2 = dept_no2, title_chosen = title, title_list = title_list, dept_employees_names = dept_employees_names)
     if current_user.pseudo == 'admin':
         return render_template('home.html', name=current_user.pseudo)
     if current_user.pseudo == 'analyst':
