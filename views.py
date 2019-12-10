@@ -13,6 +13,7 @@ app.config['SECRET_KEY'] = 'NAM4BwQqes3vc84tThTk'
 
 login_manager=LoginManager()
 login_manager.init_app(app)
+login_manager.login_view = 'login'
 
 mongo_admin = PyMongo(
     app, uri="mongodb://admin:admin@devincimdb1027.westeurope.cloudapp.azure.com:30000/cloud_app")
@@ -29,7 +30,6 @@ class User():
     def __init__(self, pseudo, password):
         self.pseudo = pseudo
         self.password = password
-        self.authenticated = False
 
     def is_active(self):
         """True, as all users are active."""
@@ -41,7 +41,7 @@ class User():
 
     def is_authenticated(self):
         """Return True if the user is authenticated."""
-        return self.authenticated
+        return True
 
     def is_anonymous(self):
         """False, as anonymous users aren't supported."""
@@ -49,11 +49,16 @@ class User():
 
 @login_manager.user_loader
 def load_user(user_id):
-    return users.find_one({"_id":user_id})
+    user_db = users.find_one({'pseudo':user_id})
+    return User(user_db['pseudo'],user_db['password'])
 
 class RegForm(FlaskForm):
     pseudo = StringField('pseudo',  validators=[InputRequired(), Length(max=30)])
     password = PasswordField('password', validators=[InputRequired(), Length(min=4, max=20)])
+
+@app.route('/')
+def default():
+    return redirect(url_for('home'))
 
 @app.route('/home/')
 @login_required
@@ -71,6 +76,8 @@ def register():
                 users.insert_one({"pseudo":form.pseudo.data,"password":hashpass})
                 login_user(User(form.pseudo.data,hashpass))
                 return redirect(url_for('home'))
+        else:
+            Flask.flash("Pseudo ou mot de passe invalide")
     return render_template('register.html', form=form)
 
 @app.route('/login/', methods=['GET', 'POST'])
@@ -85,6 +92,8 @@ def login():
                 if check_password_hash(check_user['password'], form.password.data):
                     login_user(User(form.pseudo.data,form.password.data))
                     return redirect(url_for('home'))
+        else:
+            Flask.flash("Pseudo ou mot de passe invalide")
     return render_template('login.html', form=form)
 
 @app.route('/logout/', methods = ['GET'])
