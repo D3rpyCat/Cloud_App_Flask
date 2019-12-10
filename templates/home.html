@@ -10,7 +10,7 @@
 <body>
     <div class="dashboard">
         <h1>Accueil</h1>
-        <p>Bienvenue {{ name }} !</p>
+        <p>Bienvenue {{name}} !</p>
 
         {% if name == 'user'%}
         <div class="all-managers">
@@ -90,9 +90,9 @@
 
         <div class="all-employees">
             <form action="/home/" method="GET">
-                Departement : 
-                <select name="dept_no">
-                    {% for dept in dept_no_list %}
+                Département : 
+                <select name="dept_no2">
+                    {% for dept in dept_no_list2 %}
                     {%if dept.dept_no == dept_no_chosen2 %}
                     <option selected>{{dept.dept_no}}</option>
                     {%else%}
@@ -103,10 +103,10 @@
                 Titre :
                 <select name="title">
                     {% for title in title_list %}
-                    {%if title.title == title_chosen %}
-                    <option selected>{{title.title}}</option>
+                    {%if title == title_chosen %}
+                    <option selected>{{title}}</option>
                     {%else%}
-                    <option>{{title.title}}</option>
+                    <option>{{title}}</option>
                     {%endif%}
                     {% endfor %}
                 </select>

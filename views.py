@@ -159,15 +159,11 @@ def home():
         else:
             max_value = 100000
 
-        # all-employees
-        title_list = []
-        all_title_list = employees.aggregate(
-            [{"$unwind": {"path": "$all_titles"}}])
-        for t in all_title_list:
-            title_list.append(t['all_titles']['title'])
+        # all_employees
+        title_list = employees.find().distinct("all_titles.title")
 
-        if request.method == 'GET' and request.args.get('dept_no') != None and request.args.get('title') != None:
-            dept_no2 = request.args.get('dept_no')
+        if request.method == 'GET' and request.args.get('dept_no2') != None and request.args.get('title') != None:
+            dept_no2 = request.args.get('dept_no2')
             title = request.args.get('title')
         else:
             dept_no2 = departments.find_one({}, {"dept_no": 1})['dept_no']
@@ -175,30 +171,18 @@ def home():
 
         dept_employees_names = []
         dept_employees = employees.aggregate(
-            [{"$match": {"all_dept.dept_no": str(dept_no)}},
+            [{"$match": {"all_dept.dept_no": str(dept_no2)}},
              {"$unwind": {"path": "$all_titles"}},
                 {"$match": {"all_titles.title": str(title)}},
                 {"$project": {"first_name": 1.0, "last_name": 1.0}}])
         for emp in dept_employees:
             dept_employees_names.append(emp)
-            
 
         return render_template('home.html', name=current_user.pseudo, dept_no_list=dept_no_list, employees_names=employees_names, dept_no_chosen=dept_no, emp_emp_no=emp_emp_no, bar_labels=labels, bar_values=values, max=max_value, dept_no_chosen2 = dept_no2, title_chosen = title, title_list = title_list, dept_employees_names = dept_employees_names)
     if current_user.pseudo == 'admin':
         return render_template('home.html', name=current_user.pseudo)
     if current_user.pseudo == 'analyst':
         return render_template('home.html', name=current_user.pseudo)
-
-
-@app.route('/user/result/salary/')
-def user_result_salary():
-    salaries_list = employees.aggregate(
-        [{	"$match": {"first_name": "Sachin", "last_name": "Tsukuda"}},
-         {	"$unwind": {"path": "$all_salaries"}},
-            {	"$match": {"all_salaries.from_date": "1999/09/03",
-                         "all_salaries.to_date": "2006/09/02"}},
-            {"$project": {"all_salaries.salary": 1.0}}])
-    return render_template("user_result_salary.html", salaries_list=salaries_list)
 
 
 @app.route('/admin/')
