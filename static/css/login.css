@@ -53,6 +53,16 @@ input:focus {
     box-shadow: none;
 }
 
+.register-button {
+    margin-top: 8px !important;
+    background-color: #ECF0F1 !important;
+    color: black !important;
+}
+
+.register-button:hover {
+    background-color: #dde4e6 !important;
+}
+
 .btn {
     border: 2px solid transparent;
     background: #3498DB;

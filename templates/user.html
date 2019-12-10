@@ -1,4 +1,0 @@
-<h1>Tableau de bord utilisateur</h1>
-
-<form action="/user/result/all_managers" method="GET">Noms des managers du département <select name="dept_no" onchange="this.form.submit()">{% for dept_no in dept_no_list %}
-        <option>{{dept_no.dept_no}}</option>{% endfor %}</select></form>

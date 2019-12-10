@@ -1,30 +1,34 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Connection</title>
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
-      </head>
-    <body>
-        <form action="/login/" method="post">
-            <div class="login">
-                <div class="login-screen">
-                    <div class="app-title">
-                        <h1>Connection</h1>
-                    </div>
-                    <div class="login-form">
-                        <div class="control-group">
-                            <p class="login-field">Pseudo</p>
-                            {{ form.pseudo }}
-                        </div>
-                        <div class="control-group">
-                            <p class="login-field">Mot de passe</p>
-                            {{ form.password }}
-                            {{ form.hidden_tag() }}
-                        </div>
-                        <input class="btn btn-primary btn-large btn-block" type="submit" value="Connection">
-                    </div>
-                </div>
+
+<head>
+    <title>Connection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
+</head>
+
+<body>
+    <div class="login">
+        <div class="login-screen">
+            <div class="app-title">
+                <h1>Connection</h1>
             </div>
-        </form>
-    </body>
+            <form action="/login/" method="post">
+                <div class="login-form">
+                    <div class="control-group">
+                        <p class="login-field">Pseudo</p>
+                        {{ form.pseudo }}
+                    </div>
+                    <div class="control-group">
+                        <p class="login-field">Mot de passe</p>
+                        {{ form.password }}
+                        {{ form.hidden_tag() }}
+                    </div>
+                    <input class="btn btn-primary btn-large btn-block" type="submit" value="Connection">
+                    <a href="/register/" class="btn btn-primary btn-large btn-block register-button">S'enregistrer</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+
 </html>
