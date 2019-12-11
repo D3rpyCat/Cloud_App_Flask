@@ -178,7 +178,46 @@ def home():
         for emp in dept_employees:
             dept_employees_names.append(emp)
 
-        return render_template('home.html', name=current_user.pseudo, dept_no_list=dept_no_list, employees_names=employees_names, dept_no_chosen=dept_no, emp_emp_no=emp_emp_no, bar_labels=labels, bar_values=values, max=max_value, dept_no_chosen2 = dept_no2, title_chosen = title, title_list = title_list, dept_employees_names = dept_employees_names)
+        # dept_titles_date
+        if request.method == 'GET' and request.args.get('dept_no3') != None and request.args.get('from_date_year') != None and request.args.get('from_date_month') != None:
+            dept_no3 = request.args.get('dept_no3')
+            from_date_year = request.args.get('from_date_year')
+            from_date_month = request.args.get('from_date_month')
+            if len(from_date_month)==1:
+                from_date_month = "0"+from_date_month
+        else:
+            dept_no3 = departments.find_one({}, {"dept_no": 1})['dept_no']
+            list_dates = employees.find().distinct("all_dept.from_date")[0]
+            from_date_year = list_dates[:4]
+            from_date_month = list_dates[5:7]
+
+        dept_titles_per_date = employees.aggregate(
+            [{	"$unwind": {"path": "$all_titles"}},
+             {	"$unwind": {"path": "$all_dept"}},
+                {	"$match": {"all_dept.dept_no": str(dept_no3), "all_dept.from_date": {
+                    "$regex": str(from_date_year)+"/"+str(from_date_month)}}},
+             {"$group": {"_id": {"from_date": "$all_dept.from_date",
+                                 "title": "$all_titles.title"}, "titleCount": {"$sum": 1}}},
+                {"$group": {
+                    "_id": "$_id.from_date",
+                    "titles": {"$push": {
+                        "title": "$_id.title", "count": "$titleCount"}},
+                    "count": {"$sum": "$titleCount"}}},
+                {"$sort": {"_id": 1}},
+                {"$project": {"titles": 1}}
+             ])
+        stacked_bar_labels = []
+        stacked_bar_values = {}
+        dept_titles_datasets = []
+        for x in dept_titles_per_date:
+            stacked_bar_labels.append(x["_id"])
+            stacked_bar_values[x["_id"]] = x["titles"]
+            for title in x["titles"]:
+                if title['title'] not in dept_titles_datasets:
+                    dept_titles_datasets.append(title['title'])
+        
+
+        return render_template('home.html', name=current_user.pseudo, dept_no_list=list(dept_no_list), employees_names=employees_names, dept_no_chosen=dept_no, emp_emp_no=emp_emp_no, bar_labels=labels, bar_values=values, max=max_value, dept_no_chosen2=dept_no2, title_chosen=title, title_list=list(title_list), dept_employees_names=dept_employees_names, dept_no_chosen3=dept_no3, from_date_year=from_date_year,from_date_month=from_date_month,stacked_bar_labels=stacked_bar_labels, dept_titles_datasets=dept_titles_datasets,stacked_bar_values=stacked_bar_values)
     if current_user.pseudo == 'admin':
         return render_template('home.html', name=current_user.pseudo)
     if current_user.pseudo == 'analyst':

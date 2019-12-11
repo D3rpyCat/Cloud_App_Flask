@@ -14,7 +14,7 @@ h1 {
     text-align: center;
 }
 
-.all-managers{
+.dashboard-element{
     margin-bottom: 10px;
     padding-bottom: 5px;
     border-bottom: black 1px solid;
@@ -22,4 +22,9 @@ h1 {
 
 .bar-chart{
     width: 75%;
+}
+
+.all-employees-result {
+    height: 200px;
+    overflow-y: auto;
 }

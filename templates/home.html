@@ -5,124 +5,205 @@
     <title>Tableau de bord</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hammerjs@2.0.8"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@0.7.4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/randomcolor/0.5.4/randomColor.min.js"></script>
 </head>
 
 <body>
     <div class="dashboard">
-        <h1>Accueil</h1>
-        <p>Bienvenue {{name}} !</p>
-
-        {% if name == 'user'%}
-        <div class="all-managers">
-            <form action="/home/" method="GET">Noms des managers du département :
-                <select name="dept_no" onchange="this.form.submit()">
-                    {% for dept in dept_no_list %}
-                    {%if dept.dept_no == dept_no_chosen %}
-                    <option selected>{{dept.dept_no}}</option>
-                    {%else%}
-                    <option>{{dept.dept_no}}</option>
-                    {%endif%}
-                    {% endfor %}
-                </select>
-            </form>
-            <div>
-                {% for employee in employees_names %}
-                <li>{{employee.first_name}} {{employee.last_name}}</li>
-                {% endfor %}
-            </div>
+        <div>
+            <h1>Accueil</h1>
+            <p>Bienvenue {{name}} !</p>
         </div>
-
-        <div class="all-salaries">
-            <form action="/home/" method="GET">
-                <label for="emp_emp_no">Numéro d'employé : </label>
-                <input type="text" name="emp_emp_no" id="emp_emp_no" value="{{emp_emp_no}}" required>
+        <div>
+            {% if name == 'user'%}
+            <div class="all-managers dashboard-element">
+                <form action="/home/" method="GET">Noms des managers du département :
+                    <select name="dept_no" onchange="this.form.submit()">
+                        {% for dept in dept_no_list %}
+                        {%if dept.dept_no == dept_no_chosen %}
+                        <option selected>{{dept.dept_no}}</option>
+                        {%else%}
+                        <option>{{dept.dept_no}}</option>
+                        {%endif%}
+                        {% endfor %}
+                    </select>
+                </form>
                 <div>
-                    <input type="submit" value="OK">
-                </div>
-            </form>
-            <div class="bar-chart">
-                <canvas id="bar_chart"></canvas>
-                <script>
-                    window.chartColors = {
-                        red: 'rgb(255, 99, 132)',
-                        orange: 'rgb(255, 159, 64)',
-                        yellow: 'rgb(255, 205, 86)',
-                        green: 'rgb(75, 192, 192)',
-                        blue: 'rgb(54, 162, 235)',
-                        purple: 'rgb(153, 102, 255)',
-                        grey: 'rgb(201, 203, 207)'
-                    };
-                    var color = Chart.helpers.color;
-                    var barChartData = {
-                        labels: [{% for item in bar_labels %}
-                    "{{ item }}",
-                        {% endfor %}],
-                    datasets: [{
-                        label: 'Salaires',
-                        backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
-                        borderColor: window.chartColors.blue,
-                        borderWidth: 1,
-                        data: [
-                            {% for item in bar_values %}
-                            "{{ item }}",
+                    {% for employee in employees_names %}
+                    <li>{{employee.first_name}} {{employee.last_name}}</li>
                     {% endfor %}
-                    ]
+                </div>
+            </div>
+
+            <div class="all-salaries dashboard-element">
+                Salaires d'un employé par période :
+                <form action="/home/" method="GET">
+                    <label for="emp_emp_no">Numéro d'employé : </label>
+                    <input type="text" name="emp_emp_no" id="emp_emp_no" value="{{emp_emp_no}}" required>
+                    <div>
+                        <input type="submit" value="OK">
+                    </div>
+                </form>
+                <div class="bar-chart">
+                    <canvas id="bar_chart"></canvas>
+                    <script>
+                        window.chartColors = {
+                            red: 'rgb(255, 99, 132)',
+                            orange: 'rgb(255, 159, 64)',
+                            yellow: 'rgb(255, 205, 86)',
+                            green: 'rgb(75, 192, 192)',
+                            blue: 'rgb(54, 162, 235)',
+                            purple: 'rgb(153, 102, 255)',
+                            grey: 'rgb(201, 203, 207)'
+                        };
+                        var color = Chart.helpers.color;
+                        var barChartData = {
+                            labels: [{% for item in bar_labels %}
+                        "{{ item }}",
+                            {% endfor %}],
+                        datasets: [{
+                            label: 'Salaires',
+                            backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
+                            borderColor: window.chartColors.blue,
+                            borderWidth: 1,
+                            data: [
+                                {% for item in bar_values %}
+                            "{{ item }}",
+                        {% endfor %}
+                        ]
                         }]
                     };
-                    var ctx = document.getElementById('bar_chart').getContext('2d');
-                    window.myBar = new Chart(ctx, {
-                        type: 'bar',
-                        data: barChartData,
-                        options: {
-                            responsive: true,
-                            legend: {
-                                position: 'top',
-                            },
-                            title: {
-                                display: true,
-                                text: 'Histogramme des salaires par période'
+                        var ctx = document.getElementById('bar_chart').getContext('2d');
+                        window.myBar = new Chart(ctx, {
+                            type: 'bar',
+                            data: barChartData,
+                            options: {
+                                responsive: true,
+                                legend: {
+                                    position: 'top',
+                                },
+                                title: {
+                                    display: true,
+                                    text: 'Histogramme des salaires par période'
+                                }
                             }
-                        }
-                    });
-                </script>
-            </div>
-        </div>
-
-        <div class="all-employees">
-            <form action="/home/" method="GET">
-                Département : 
-                <select name="dept_no2">
-                    {% for dept in dept_no_list2 %}
-                    {%if dept.dept_no == dept_no_chosen2 %}
-                    <option selected>{{dept.dept_no}}</option>
-                    {%else%}
-                    <option>{{dept.dept_no}}</option>
-                    {%endif%}
-                    {% endfor %}
-                </select>
-                Titre :
-                <select name="title">
-                    {% for title in title_list %}
-                    {%if title == title_chosen %}
-                    <option selected>{{title}}</option>
-                    {%else%}
-                    <option>{{title}}</option>
-                    {%endif%}
-                    {% endfor %}
-                </select>
-                <div>
-                    <input type="submit" value="OK">
+                        });
+                    </script>
                 </div>
-            </form>
-            <div>
-                {% for employee in dept_employees_names %}
-                <li>{{employee.first_name}} {{employee.last_name}}</li>
-                {% endfor %}
             </div>
 
-        </div>
-        {%endif%}
+            <div class="all-employees dashboard-element">
+                Noms des collaborateurs avec le titre choisi pour le département choisi :
+                <form action="/home/" method="GET">
+                    Département :
+                    <select name="dept_no2">
+                        {% for dept in dept_no_list %}
+                        {%if dept.dept_no == dept_no_chosen2 %}
+                        <option selected>{{dept.dept_no}}</option>
+                        {%else%}
+                        <option>{{dept.dept_no}}</option>
+                        {%endif%}
+                        {% endfor %}
+                    </select>
+                    Titre :
+                    <select name="title">
+                        {% for title in title_list %}
+                        {%if title == title_chosen %}
+                        <option selected>{{title}}</option>
+                        {%else%}
+                        <option>{{title}}</option>
+                        {%endif%}
+                        {% endfor %}
+                    </select>
+                    <div>
+                        <input type="submit" value="OK">
+                    </div>
+                </form>
+                <div class="all-employees-result">
+                    {% for employee in dept_employees_names %}
+                    <li>{{employee.first_name}} {{employee.last_name}}</li>
+                    {% endfor %}
+                </div>
+            </div>
 
+            <div class="dept-titles dashboard-element">
+                Proportion des titres des collaborateurs ayant intégré le département par date :
+                <form action="/home/" method="GET">
+                    Département :
+                    <select name="dept_no3">
+                        {% for dept in dept_no_list %}
+                        {%if dept.dept_no == dept_no_chosen3 %}
+                        <option selected>{{dept.dept_no}}</option>
+                        {%else%}
+                        <option>{{dept.dept_no}}</option>
+                        {%endif%}
+                        {% endfor %}
+                    </select>
+                    <label for="from_date_year">Année : </label>
+                    <input type="text" name="from_date_year" id="from_date_year" value="{{from_date_year}}" required>
+                    <label for="from_date_month">Mois : </label>
+                    <input type="text" name="from_date_month" id="from_date_month" value="{{from_date_month}}" required>
+                    <div>
+                        <input type="submit" value="OK">
+                    </div>
+                </form>
+                <div class="dept-titles-result">
+                    <canvas id="bar_chart_stacked"></canvas>
+                    <script>
+                        var colors = randomColor({count:8,hue:'blue',luminosity: 'light'})
+
+                        var barChartData = {
+                            labels: [{% for item in stacked_bar_labels %}"{{ item }}", {% endfor %}],
+                        datasets: [
+                            {% for item in dept_titles_datasets %}
+                        {
+                            label: '{{ item }}',
+                                backgroundColor: colors[{{loop.index}}],
+                                    data: [
+                                        {% for val in stacked_bar_values %}
+                        {% for title in stacked_bar_values[val] %}
+                        {%if title['title'] == item %}
+                        "{{ title['count'] }}",
+                            {% endif %}
+                        {% endfor %}
+                        {% endfor %}
+                                    ]
+                                },
+                        {% endfor %}]};
+                        var ctx = document.getElementById('bar_chart_stacked').getContext('2d');
+                        window.myBar = new Chart(ctx, {
+                            type: 'bar',
+                            data: barChartData,
+                            options: {
+                                title: {
+                                    display: true,
+                                    text: 'Histogramme empilé des titres des collaborateurs ayant intégré le département - {{from_date_year}}/{{from_date_month}}'
+                                },
+                                tooltips: {
+                                    mode: 'index',
+                                    intersect: false
+                                },
+                                responsive: true,
+                                scales: {
+                                    xAxes: [{
+                                        ticks: {
+                                            autoSkip: true
+                                        },
+                                        stacked: true,
+                                    }],
+                                    yAxes: [{
+                                        stacked: true
+                                    }]
+                                }
+                            }
+                        });
+                    </script>
+                </div>
+            </div>
+            {%endif%}
+        </div>
         <a href='/logout/'>Se déconnecter</a>
     </div>
 </body>
