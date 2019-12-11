@@ -6,6 +6,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField
 from wtforms.validators import InputRequired, Length
 from werkzeug.security import generate_password_hash, check_password_hash
+from bson.json_util import dumps
 
 
 app = Flask(__name__)
@@ -223,7 +224,6 @@ def home():
     if current_user.pseudo == 'analyst':
         return render_template('home.html', name=current_user.pseudo)
 
-
 @app.route('/admin/')
 def admin():
     return "Admin view"
@@ -233,6 +233,39 @@ def admin():
 def analyst():
     return "Analyst view"
 
+@app.route('/test/')
+def test():
+    # all_managers
+    dept_no_list = departments.find({}, {"dept_no": 1})
+    if request.method == 'GET' and request.args.get('dept_no') != None:
+        dept_no = request.args.get('dept_no')
+    else:
+        dept_no = departments.find_one({}, {"dept_no": 1})['dept_no']
+    departments_list = departments.aggregate(
+        [{	"$match": {"dept_no": str(dept_no)}},
+            {
+            "$unwind": {
+                "path": "$all_managers"
+            }}
+            ])
+    employees_names = []
+    for department in departments_list:
+        results = employees.aggregate(
+            [{
+                "$match": {
+                    "emp_no": department['all_managers']['emp_no']
+                }
+            },
+                {
+                    "$project": {
+                        "last_name": 1,
+                        "first_name": 1
+                    }
+            }
+            ])
+        for result in results:
+            employees_names.append(result)
+    return dumps({'success':True,"employees_names":list(employees_names)}), 200, {'ContentType':'application/json'} 
 
 if __name__ == "__main__":
     app.run(debug=True)
