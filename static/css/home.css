@@ -34,11 +34,7 @@ form {
     text-align: center;
 }
 
-.bar-chart {
-    width: 75%;
-}
-
-.all-employees-result {
+#all-employees-result,#all-managers-result {
     height: 200px;
     overflow-y: auto;
     margin: 10px;

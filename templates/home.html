@@ -4,7 +4,6 @@
 <head>
     <title>Tableau de bord</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
-    <link href="https://fonts.googleapis.com/css?family=Roboto&display=swap" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
         integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
@@ -36,11 +35,7 @@
                         <label for="dept_no">Département : </label>
                         <select name="dept_no" class="form-control">
                             {% for dept in dept_no_list %}
-                            {%if dept.dept_no == dept_no_chosen %}
-                            <option selected>{{dept.dept_no}}</option>
-                            {%else%}
                             <option>{{dept.dept_no}}</option>
-                            {%endif%}
                             {% endfor %}
                         </select>
                     </div>
@@ -51,16 +46,12 @@
 
             <div class="dashboard-element all-employees">
                 <div class="dashboard-element-title">Collaborateurs</div>
-                <form action="/home/" method="GET">
+                <form id="form-all-employees">
                     <div class="form-group">
                         <label for="dept_no2">Département : </label>
                         <select name="dept_no2" class="form-control">
                             {% for dept in dept_no_list %}
-                            {%if dept.dept_no == dept_no_chosen2 %}
-                            <option selected>{{dept.dept_no}}</option>
-                            {%else%}
                             <option>{{dept.dept_no}}</option>
-                            {%endif%}
                             {% endfor %}
                         </select>
                     </div>
@@ -68,94 +59,37 @@
                         <label for="title">Titre : </label>
                         <select name="title" class="form-control">
                             {% for title in title_list %}
-                            {%if title == title_chosen %}
-                            <option selected>{{title}}</option>
-                            {%else%}
                             <option>{{title}}</option>
-                            {%endif%}
                             {% endfor %}
                         </select>
                     </div>
                     <button type="submit" class="btn btn-primary">Valider</button>
                 </form>
-                <div class="all-employees-result">
-                    {% for employee in dept_employees_names %}
-                    <li>{{employee.first_name}} {{employee.last_name}}</li>
-                    {% endfor %}
-                </div>
+                <div id="all-employees-result"></div>
             </div>
         </div>
 
         <div class="dashboard-group">
             <div class="dashboard-element all-salaries">
                 <div class="dashboard-element-title">Salaires par période</div>
-                <form action="/home/" method="GET">
+                <form id="form-all-salaries">
                     <div class="form-group">
-                        <label for="emp_emp_no">Numéro d'employé : </label>
+                        <label for="emp_emp_no">Entrez votre numéro employé : </label>
                         <input type="text" class="form-control" name="emp_emp_no" id="emp_emp_no" value="{{emp_emp_no}}" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Valider</button>
                 </form>
-                <div class="bar-chart">
-                    <canvas id="bar_chart"></canvas>
-                    <script>
-                        window.chartColors = {
-                            red: 'rgb(255, 99, 132)',
-                            orange: 'rgb(255, 159, 64)',
-                            yellow: 'rgb(255, 205, 86)',
-                            green: 'rgb(75, 192, 192)',
-                            blue: 'rgb(54, 162, 235)',
-                            purple: 'rgb(153, 102, 255)',
-                            grey: 'rgb(201, 203, 207)'
-                        };
-                        var color = Chart.helpers.color;
-                        var barChartData = {
-                            labels: [{% for item in bar_labels %}
-                        "{{ item }}",
-                            {% endfor %}],
-                        datasets: [{
-                            label: 'Salaires',
-                            backgroundColor: color(window.chartColors.blue).alpha(0.5).rgbString(),
-                            borderColor: window.chartColors.blue,
-                            borderWidth: 1,
-                            data: [
-                                {% for item in bar_values %}
-                                        "{{ item }}",
-                        {% endfor %}
-                        ]
-                                    }]
-                                };
-                        var ctx = document.getElementById('bar_chart').getContext('2d');
-                        window.myBar = new Chart(ctx, {
-                            type: 'bar',
-                            data: barChartData,
-                            options: {
-                                responsive: true,
-                                legend: {
-                                    position: 'top',
-                                },
-                                title: {
-                                    display: true,
-                                    text: 'Histogramme des salaires par période'
-                                }
-                            }
-                        });
-                    </script>
-                </div>
+                <div id="all-salaries-result"></div>
             </div>
 
             <div class="dashboard-element dept-titles">
                 <div class="dashboard-element-title">Titres par département et date d'intégration</div>
-                <form action="/home/" method="GET">
+                <form id="form-dept-titles">
                     <div class="form-group">
                         <label for="dept_no3">Département : </label>
                         <select name="dept_no3" class="form-control" >
-                            {% for dept in dept_no_list %}
-                            {%if dept.dept_no == dept_no_chosen3 %}
-                            <option selected>{{dept.dept_no}}</option>
-                            {%else%}
+                            {% for dept in dept_no_list %}                            
                             <option>{{dept.dept_no}}</option>
-                            {%endif%}
                             {% endfor %}
                         </select>
                     </div>
@@ -171,65 +105,12 @@
                     </div>
                     <button type="submit" class="btn btn-primary">Valider</button>
                 </form>
-                <div class="dept-titles-result">
-                    <canvas id="bar_chart_stacked"></canvas>
-                    <script>
-                        var colors = randomColor({ count: 8, hue: 'blue', luminosity: 'light' })
-
-                        var barChartData = {
-                            labels: [{% for item in stacked_bar_labels %}"{{ item }}", {% endfor %}],
-                        datasets: [
-                            {% for item in dept_titles_datasets %}
-                        {
-                            label: '{{ item }}',
-                                backgroundColor: colors[
-                                    {{ loop.index }}
-                                ],
-                        data: [
-                            {% for val in stacked_bar_values %}
-                        {% for title in stacked_bar_values[val] %}
-                        {%if title['title'] == item %}
-                        "{{ title['count'] }}",
-                            {% endif %}
-                        {% endfor %}
-                        {% endfor %}
-                                                ]
-                                            },
-                        {% endfor %}]};
-                        var ctx = document.getElementById('bar_chart_stacked').getContext('2d');
-                        window.myBar = new Chart(ctx, {
-                            type: 'bar',
-                            data: barChartData,
-                            options: {
-                                title: {
-                                    display: true,
-                                    text: 'Histogramme empilé des titres des collaborateurs ayant intégré le département - {{from_date_year}}/{{from_date_month}}'
-                                },
-                                tooltips: {
-                                    mode: 'index',
-                                    intersect: false
-                                },
-                                responsive: true,
-                                scales: {
-                                    xAxes: [{
-                                        ticks: {
-                                            autoSkip: true
-                                        },
-                                        stacked: true,
-                                    }],
-                                    yAxes: [{
-                                        stacked: true
-                                    }]
-                                }
-                            }
-                        });
-                    </script>
-                </div>
+                <div id="dept-titles-result"></div>
             </div>
         </div>
         {%endif%}
         <div class="dashboard-element">
-            <a href='/logout/'>Se déconnecter</a>
+            <button id="disconnect" type="button" class="btn btn-danger">Se déconnecter</button>
         </div>
     </div>
 </body>
