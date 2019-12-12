@@ -39,3 +39,13 @@ form {
     overflow-y: auto;
     margin: 10px;
 }
+
+.moy-salary {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+}
+
+#moy-salary-result{
+    height:500px
+}

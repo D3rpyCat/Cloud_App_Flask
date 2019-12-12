@@ -150,7 +150,7 @@ $(function () {
                 console.log(data);
                 if (data.labels.length > 0) {
                     $('#dept-titles-result').append('<canvas id="dept-titles-bar-chart"></canvas>')
-                    var colors = randomColor({ count: 8, hue: 'blue', luminosity: 'light' })
+                    var colors = randomColor({ count: data.datasets.length, hue: 'blue', luminosity: 'light' })
 
                     var datasets = []
                     var count = 0
@@ -214,8 +214,8 @@ $(function () {
 
     $('#form-moy-salary').submit(function (e) {
         var formData = {
-            'from_date': $('input[name=from_date]').val(),
-            'to_date': $('input[name=to_date]').val()
+            'from_date': $('input[name=moy-salary-from_date]').val(),
+            'to_date': $('input[name=moy-salary-to_date]').val()
         };
         $.ajax({
             type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
@@ -226,6 +226,7 @@ $(function () {
             beforeSend: function () {
                 $('#form-moy-salary button').empty()
                 $('#form-moy-salary button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
+                $('#moy-salary-result').empty()
             }
         })
             // using the done promise callback
@@ -233,11 +234,40 @@ $(function () {
 
                 // log data to the console so we can see
                 console.log(data);
+                if (data.labels.length > 0 && data.values.length > 0) {
+                    $('#moy-salary-result').append('<canvas id="moy-salary-doughnut"></canvas>')
+                    var config = {
+                        type: 'doughnut',
+                        data: {
+                            datasets: [{
+                                data: data.values,
+                                backgroundColor: randomColor({ count: 2, hue: 'blue', luminosity: 'light' }),
+                                label: 'Dataset 1'
+                            }],
+                            labels: data.labels
+                        },
+                        options: {
+                            responsive: true,
+                            legend: {
+                                position: 'top',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Salaire moyen par genre, du ' + formData.from_date + ' au ' + formData.to_date
+                            },
+                            animation: {
+                                animateScale: true,
+                                animateRotate: true
+                            }
+                        }
+                    };
 
-                //$('#all-managers-result').empty()
-                // data.employees_names.forEach(element => {
-                //     $('#all-managers-result').append('<li>' + element.first_name + ' ' + element.last_name + '</li>')
-                // });
+                    var ctx = document.getElementById('moy-salary-doughnut').getContext('2d');
+                    window.myDoughnut = new Chart(ctx, config);
+                }
+                else {
+                    $('#moy-salary-result').append('Pas de résultats')
+                }
 
                 $('#form-moy-salary button').remove('span')
                 $('#form-moy-salary button').text('Valider')
@@ -245,7 +275,121 @@ $(function () {
         e.preventDefault();
     });
 
-    $('#disconnect').on('click', function () {
-        window.location.href='/logout/'
+    $('#form-avg-salary-title-hire-date').submit(function (e) {
+        var formData = {
+            'from_date_year': $('input[name=from_date_year2]').val(),
+            'from_date_month': $('input[name=from_date_month2]').val()
+        };
+        $.ajax({
+            type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
+            url: '/avg_salary_title_hire_date/', // the url where we want to POST
+            data: formData, // our data object
+            dataType: 'json', // what type of data do we expect back from the server
+            encode: true,
+            beforeSend: function () {
+                $('#form-avg-salary-title-hire-date button').empty()
+                $('#form-avg-salary-title-hire-date button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
+                $('#avg-salary-title-hire-date-result').empty()
+            }
+        })
+            // using the done promise callback
+            .done(function (data) {
+                // log data to the console so we can see
+                console.log(data);
+                if (data.labels.length > 0) {
+                    $('#avg-salary-title-hire-date-result').append('<canvas id="avg-salary-title-hire-date-bar-chart"></canvas>')
+                    var colors = randomColor({ count: data.datasets.length, hue: 'blue', luminosity: 'light' })
+
+                    var datasets = []
+                    var count = 0
+                    data.datasets.forEach(function (label) {
+                        var data2 = []
+                        data.values.forEach(function(value){
+                            if (value.title == label){
+                                data2.push(value.moy)
+                            }
+                        })
+                        var dataset = {
+                            label: label,
+                            backgroundColor: colors[count],
+                            data: data2
+                        }
+                        count++
+                        datasets.push(dataset)
+                    })
+                    var barChartData = {
+                        labels: data.labels,
+                        datasets: datasets
+                    };
+                    var ctx = document.getElementById('avg-salary-title-hire-date-bar-chart').getContext('2d');
+                    window.myBar = new Chart(ctx, {
+                        type: 'bar',
+                        data: barChartData,
+                        options: {
+                            title: {
+                                display: true,
+                                text: 'Histogramme empilé des salaires moyens par titre et par ancienneté - ' + formData.from_date_year + '/' + formData.from_date_month
+                            },
+                            tooltips: {
+                                mode: 'index',
+                                intersect: false
+                            },
+                            responsive: true,
+                            scales: {
+                                xAxes: [{
+                                    ticks: {
+                                        autoSkip: true
+                                    },
+                                    stacked: true,
+                                }],
+                                yAxes: [{
+                                    stacked: true
+                                }]
+                            }
+                        }
+                    });
+                }
+                else {
+                    $('#avg-salary-title-hire-date').append('Pas de résultats')
+                }
+                $('#form-avg-salary-title-hire-date button').remove('span')
+                $('#form-avg-salary-title-hire-date button').text('Valider')
+            });
+        e.preventDefault();
     });
+
+    $('#disconnect').on('click', function () {
+        window.location.href = '/logout/'
+    });
+
+    var dateFormat = "yy/mm/dd"
+    var datepickerOptions = {
+        defaultDate: "+1w",
+        dateFormat: dateFormat,
+        showAnim: "fadeIn",
+        yearRange: "1985:" + new Date().getFullYear().toString(),
+        changeMonth: true,
+        changeYear: true
+    }
+
+    var from = $("#moy-salary-from_date")
+        .datepicker(datepickerOptions)
+        .on("change", function () {
+            to.datepicker("option", "minDate", getDate(this));
+        }),
+        to = $("#moy-salary-to_date").datepicker(datepickerOptions)
+            .on("change", function () {
+                from.datepicker("option", "maxDate", getDate(this));
+            });
+
+    function getDate(element) {
+        var date;
+        try {
+            date = $.datepicker.parseDate(dateFormat, element.value);
+        } catch (error) {
+            date = null;
+        }
+
+        return date;
+    }
 });

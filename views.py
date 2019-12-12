@@ -8,7 +8,7 @@ from wtforms.validators import InputRequired, Length
 from werkzeug.security import generate_password_hash, check_password_hash
 from bson.json_util import dumps
 from bson.code import Code
-
+from datetime import datetime
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'NAM4BwQqes3vc84tThTk'
@@ -121,20 +121,9 @@ def home():
         return render_template('home.html', name=current_user.pseudo)
 
 
-@app.route('/admin/')
-def admin():
-    return "Admin view"
-
-
-@app.route('/analyst/')
-def analyst():
-    return "Analyst view"
-
-
 @app.route('/all_managers/')
 def all_managers():
     # all_managers
-    dept_no_list = departments.find({}, {"dept_no": 1})
     if request.method == 'GET' and request.args.get('dept_no') != None:
         dept_no = request.args.get('dept_no')
     else:
@@ -204,12 +193,13 @@ def all_salaries():
     for s in salaries_list:
         from_date = str(s['all_salaries']['from_date'])[:4]
         to_date = str(s['all_salaries']['to_date'])[:4]
-        if to_date=="9999":
+        if to_date == "9999":
             to_date = "Aujourd'hui"
         labels.append("["+from_date + " - "+to_date+"]")
         values.append(s['all_salaries']['salary'])
 
     return dumps({'success': True, "labels": labels, "values": values}), 200, {'ContentType': 'application/json'}
+
 
 @app.route('/dept_titles_date/')
 def dept_titles_date():
@@ -221,9 +211,9 @@ def dept_titles_date():
             from_date_month = "0"+from_date_month
     else:
         dept_no3 = departments.find_one({}, {"dept_no": 1})['dept_no']
-        list_dates = employees.find().distinct("all_dept.from_date")[0]
-        from_date_year = list_dates[:4]
-        from_date_month = list_dates[5:7]
+        first_from_date = employees.find().distinct("all_dept.from_date")[0]
+        from_date_year = first_from_date[:4]
+        from_date_month = first_from_date[5:7]
 
     dept_titles_per_date = employees.aggregate(
         [{	"$unwind": {"path": "$all_titles"}},
@@ -239,7 +229,7 @@ def dept_titles_date():
                 "count": {"$sum": "$titleCount"}}},
             {"$sort": {"_id": 1}},
             {"$project": {"titles": 1}}
-            ])
+         ])
     labels = []
     values = {}
     datasets = []
@@ -250,25 +240,84 @@ def dept_titles_date():
             if title['title'] not in datasets:
                 datasets.append(title['title'])
 
-    return dumps({'success': True, "labels": labels, "values": values,"datasets":datasets}), 200, {'ContentType': 'application/json'}
+    return dumps({'success': True, "labels": labels, "values": values, "datasets": datasets}), 200, {'ContentType': 'application/json'}
+
 
 @app.route('/moy_salaire/')
 def moy_salaire():
     # moy_salary
+    if request.method == 'GET' and request.args.get('from_date') != None and request.args.get('to_date') != None:
+        from_date = request.args.get('from_date')
+        to_date = request.args.get('to_date')
+    else:
+        first_from_date = employees.find().distinct(
+            "all_salaries.from_date")[0]
+        from_date = first_from_date[0]
+        first_to_date = employees.find().distinct("all_salaries.to_date")[0]
+        from_date = first_to_date[0]
+
     map_moy_salary = Code(
-        " function() {for (i=0; i < this.all_salaries.length; i++){ var from=new Date(this.all_salaries[i].from_date)var to=new Date(this.all_salaries[i].to_date)if (from >= new Date(\"1986/06/26\") & & to <= new Date(\"2000/12/01\"))emit(this.gender, this.all_salaries[i].salary);}}")
+        "function() {for (i=0; i < this.all_salaries.length; i++){ var from=new Date(this.all_salaries[i].from_date); var to=new Date(this.all_salaries[i].to_date); if (from >= new Date(\""+str(from_date)+"\") && to <= new Date(\""+str(to_date)+"\")){emit(this.gender, this.all_salaries[i].salary);}}}")
     reduce_moy_salary = Code(
         "function (key, values) {return Array.avg(values);}")
-    queryParam = {
-        "query": {},
-        "out": {"inline": True}
-    }
-    
-    #res_moy_salary = employees.map_reduce(map_moy_salary,reduce_moy_salary, {out:{inline:1}})
-    #print(res_moy_salary)  #, res_moy_salary = res_moy_salar
-    res_moy_salary = employees.map_reduce(map_moy_salary,reduce_moy_salary, out = "result")
 
-    return dumps({'success': True, "res_moy_salary" : res_moy_salary}), 200, {'ContentType': 'application/json'}
+    result = employees.map_reduce(
+        map_moy_salary, reduce_moy_salary, out="result").find()
+
+    labels = ['M', 'F']
+    values = []
+    for res in result:
+        values.append(res['value'])
+
+    return dumps({'success': True, "labels": labels, "values": values}), 200, {'ContentType': 'application/json'}
+
+
+@app.route('/avg_salary_title_hire_date/')
+def avg_salary_title_hire_date():
+    if request.method == 'GET' and request.args.get('from_date_year') != None and request.args.get('from_date_month') != None:
+        from_date_year = request.args.get('from_date_year')
+        from_date_month = request.args.get('from_date_month')
+        if len(from_date_month) == 1:
+            from_date_month = "0"+from_date_month
+    else:
+        first_from_date = employees.find().distinct("all_dept.from_date")[0]
+        from_date_year = first_from_date[:4]
+        from_date_month = first_from_date[5:7]
+
+    map_moy_salary = Code(
+        "function () { var date = new Date(this.hire_date); if (date.getFullYear() == "+from_date_year+" && date.getMonth() == "+str(int(from_date_month)-1)+"){ emit({ \"title\": this.all_titles[this.all_titles.length - 1].title,\"hire_date\": date}, this.all_salaries[this.all_salaries.length - 1].salary);}}; ")
+    reduce_moy_salary = Code(
+        "function (key, values) {return Array.avg(values);}")
+
+    result = employees.map_reduce(
+        map_moy_salary, reduce_moy_salary, out="result")
+    avg_salaries = result.aggregate([{
+        "$group": {
+            "_id": {"title": "$_id.title",
+                    "hire_date": "$_id.hire_date"},
+            "moy": {
+                "$avg": "$value"
+            }
+        }
+    }])
+
+    labels = []
+    values = []
+    datasets = []
+    for x in avg_salaries:
+        label = str(x['_id']['hire_date'])[:10].replace("-", "/")
+        if label not in labels:
+            labels.append(label)
+        if x['_id']['title'] not in datasets:
+            datasets.append(x['_id']['title'])
+        values.append({
+            "title": x['_id']['title'],
+            "hire_date":label,
+            "moy":x['moy']
+        })
+
+    return dumps({'success': True, "labels": labels, "values": values, "datasets": datasets}), 200, {'ContentType': 'application/json'}
+
 
 if __name__ == "__main__":
     app.run(debug=True)

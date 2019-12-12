@@ -4,7 +4,9 @@
 <head>
     <title>Tableau de bord</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
         integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
         crossorigin="anonymous"></script>
@@ -75,7 +77,7 @@
                 <form id="form-all-salaries">
                     <div class="form-group">
                         <label for="emp_emp_no">Entrez votre numéro employé : </label>
-                        <input type="text" class="form-control" name="emp_emp_no" id="emp_emp_no" value="{{emp_emp_no}}" required>
+                        <input type="text" class="form-control" name="emp_emp_no" id="emp_emp_no" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Valider</button>
                 </form>
@@ -87,21 +89,19 @@
                 <form id="form-dept-titles">
                     <div class="form-group">
                         <label for="dept_no3">Département : </label>
-                        <select name="dept_no3" class="form-control" >
-                            {% for dept in dept_no_list %}                            
+                        <select name="dept_no3" class="form-control">
+                            {% for dept in dept_no_list %}
                             <option>{{dept.dept_no}}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="from_date_year">Année : </label>
-                        <input type="text" class="form-control" name="from_date_year" id="from_date_year" value="{{from_date_year}}"
-                            required>
+                        <input type="text" class="form-control" name="from_date_year" id="from_date_year" required>
                     </div>
                     <div class="form-group">
                         <label for="from_date_month">Mois : </label>
-                        <input type="text" class="form-control" name="from_date_month" id="from_date_month" value="{{from_date_month}}"
-                            required>
+                        <input type="text" class="form-control" name="from_date_month" id="from_date_month" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Valider</button>
                 </form>
@@ -111,21 +111,44 @@
         {%endif%}
 
         {% if name == 'analyst'%}
-            <div class="moy-salary dashboard-element">
-                <div class="dashboard-element-title">Salaire moyen par genre</div>
-                <form id="form-moy-salary">
-                    <div class="form-group">
-                        <label for="from_date">Salaire moyen par genre du </label>
-                        <input class = "form-control" type="text" name="from_date" id="from_date" required>
-                    </div>
-                    <div class="form-group">
-                            <label for="to_date">au </label>
-                            <input class = "form-control" type="text" name="to_date" id="to_date" required>
-                    </div>  
-                    <button type="submit" class="btn btn-primary">Valider</button>
-                </form>
+        <div class="dashboard-group">
+            <div class="dashboard-element moy-salary">
+                <div>
+                    <div class="dashboard-element-title">Salaire moyen par genre</div>
+                    <form id="form-moy-salary">
+                        <div class="form-group">
+                            <label for="moy-salary-from_date">Du :</label>
+                            <input class="form-control" type="text" name="moy-salary-from_date"
+                                id="moy-salary-from_date" autocomplete="off" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="moy-salary-to_date">Au :</label>
+                            <input class="form-control" type="text" name="moy-salary-to_date" id="moy-salary-to_date"
+                                autocomplete="off" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Valider</button>
+                    </form>
+                </div>
                 <div id="moy-salary-result"></div>
             </div>
+            <div class="dashboard-element avg-salary-title-hire-date">
+                <div>
+                    <div class="dashboard-element-title">Salaire moyen par titre et par ancienneté</div>
+                    <form id="form-avg-salary-title-hire-date">
+                        <div class="form-group">
+                            <label for="from_date_year2">Année : </label>
+                            <input type="text" class="form-control" name="from_date_year2" id="from_date_year2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="from_date_month2">Mois : </label>
+                            <input type="text" class="form-control" name="from_date_month2" id="from_date_month2" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Valider</button>
+                    </form>
+                </div>
+                <div id="avg-salary-title-hire-date-result"></div>
+            </div>
+        </div>
         {%endif%}
         <div class="dashboard-element">
             <button id="disconnect" type="button" class="btn btn-danger">Se déconnecter</button>
