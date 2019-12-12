@@ -212,6 +212,39 @@ $(function () {
         e.preventDefault();
     });
 
+    $('#form-moy-salary').submit(function (e) {
+        var formData = {
+            'from_date': $('input[name=from_date]').val(),
+            'to_date': $('input[name=to_date]').val()
+        };
+        $.ajax({
+            type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
+            url: '/moy_salaire/', // the url where we want to POST
+            data: formData, // our data object
+            dataType: 'json', // what type of data do we expect back from the server
+            encode: true,
+            beforeSend: function () {
+                $('#form-moy-salary button').empty()
+                $('#form-moy-salary button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
+            }
+        })
+            // using the done promise callback
+            .done(function (data) {
+
+                // log data to the console so we can see
+                console.log(data);
+
+                //$('#all-managers-result').empty()
+                // data.employees_names.forEach(element => {
+                //     $('#all-managers-result').append('<li>' + element.first_name + ' ' + element.last_name + '</li>')
+                // });
+
+                $('#form-moy-salary button').remove('span')
+                $('#form-moy-salary button').text('Valider')
+            });
+        e.preventDefault();
+    });
+
     $('#disconnect').on('click', function () {
         window.location.href='/logout/'
     });

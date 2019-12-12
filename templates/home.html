@@ -109,6 +109,24 @@
             </div>
         </div>
         {%endif%}
+
+        {% if name == 'analyst'%}
+            <div class="moy-salary dashboard-element">
+                <div class="dashboard-element-title">Salaire moyen par genre</div>
+                <form id="form-moy-salary">
+                    <div class="form-group">
+                        <label for="from_date">Salaire moyen par genre du </label>
+                        <input class = "form-control" type="text" name="from_date" id="from_date" required>
+                    </div>
+                    <div class="form-group">
+                            <label for="to_date">au </label>
+                            <input class = "form-control" type="text" name="to_date" id="to_date" required>
+                    </div>  
+                    <button type="submit" class="btn btn-primary">Valider</button>
+                </form>
+                <div id="moy-salary-result"></div>
+            </div>
+        {%endif%}
         <div class="dashboard-element">
             <button id="disconnect" type="button" class="btn btn-danger">Se déconnecter</button>
         </div>
