@@ -11,7 +11,7 @@ MongoDB dashboard for a student project using the "employees" database.
 * Flask-WTF
 * Werkzeug
 
-## Lauch the app
+## Installing & Running the app
 
 * Creating a virtual environment on Windows and activating it:
 
