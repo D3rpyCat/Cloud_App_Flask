@@ -13,6 +13,8 @@ MongoDB dashboard for a student project using the "employees" database.
 
 ## Installing & Running the app
 
+* Install virtualenv/virtualenvwrapper-win
+
 * Creating a virtual environment on Windows and activating it:
 
 ```bash
@@ -27,7 +29,9 @@ virtualenv App
 source venv/bin/activate
 ```
 
-* Install all required packages listed above, using ```pip install```.
+You should see the name of your new environment on the left of your command line.
+
+* Install all the other required packages listed above on your environment, using ```pip install```.
 
 * Launch the app:
 
