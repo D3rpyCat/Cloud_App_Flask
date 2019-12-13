@@ -25,8 +25,13 @@
 <body>
     <div>
         <div class="dashboard-element welcome">
-            <h1>Accueil</h1>
-            <p>Bienvenue {{name}} !</p>
+            <div id="welcome-title">
+                <h1>Accueil</h1>
+                <p>Bienvenue <b>{{name}}</b> !</p>
+            </div>
+            <div>
+                <button id="disconnect" type="button" class="btn btn-danger">Se déconnecter</button>
+            </div>
         </div>
         {% if name == 'user'%}
         <div class="dashboard-group">
@@ -34,12 +39,16 @@
                 <div class="dashboard-element-title">Managers</div>
                 <form id="form-all-managers">
                     <div class="form-group">
-                        <label for="dept_no">Département : </label>
-                        <select name="dept_no" class="form-control">
-                            {% for dept in dept_no_list %}
-                            <option>{{dept.dept_no}}</option>
-                            {% endfor %}
-                        </select>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="dept_no">Département</label>
+                            </div>
+                            <select name="dept_no" class="form-control custom-select">
+                                {% for dept in dept_no_list %}
+                                <option>{{dept.dept_no}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Valider</button>
                 </form>
@@ -50,20 +59,28 @@
                 <div class="dashboard-element-title">Collaborateurs</div>
                 <form id="form-all-employees">
                     <div class="form-group">
-                        <label for="dept_no2">Département : </label>
-                        <select name="dept_no2" class="form-control">
-                            {% for dept in dept_no_list %}
-                            <option>{{dept.dept_no}}</option>
-                            {% endfor %}
-                        </select>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="dept_no2">Département</label>
+                            </div>
+                            <select name="dept_no2" class="form-control custom-select">
+                                {% for dept in dept_no_list %}
+                                <option>{{dept.dept_no}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="title">Titre : </label>
-                        <select name="title" class="form-control">
-                            {% for title in title_list %}
-                            <option>{{title}}</option>
-                            {% endfor %}
-                        </select>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="title">Titre</label>
+                            </div>
+                            <select name="title" class="form-control custom-select">
+                                {% for title in title_list %}
+                                <option>{{title}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Valider</button>
                 </form>
@@ -76,8 +93,13 @@
                 <div class="dashboard-element-title">Salaires par période</div>
                 <form id="form-all-salaries">
                     <div class="form-group">
-                        <label for="emp_emp_no">Entrez votre numéro employé : </label>
-                        <input type="text" class="form-control" name="emp_emp_no" id="emp_emp_no" required>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="emp_emp_no-span">Votre numéro employé</span>
+                            </div>
+                            <input name="emp_emp_no" id="emp_emp_no" type="text" class="form-control"
+                                aria-label="Default" aria-describedby="emp_emp_no-span" required>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Valider</button>
                 </form>
@@ -88,20 +110,34 @@
                 <div class="dashboard-element-title">Titres par département et date d'intégration</div>
                 <form id="form-dept-titles">
                     <div class="form-group">
-                        <label for="dept_no3">Département : </label>
-                        <select name="dept_no3" class="form-control">
-                            {% for dept in dept_no_list %}
-                            <option>{{dept.dept_no}}</option>
-                            {% endfor %}
-                        </select>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <label class="input-group-text" for="dept_no3">Département</label>
+                            </div>
+                            <select name="dept_no3" class="form-control custom-select">
+                                {% for dept in dept_no_list %}
+                                <option>{{dept.dept_no}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="from_date_year">Année : </label>
-                        <input type="text" class="form-control" name="from_date_year" id="from_date_year" required>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="from_date_year-span">Année</span>
+                            </div>
+                            <input name="from_date_year" id="from_date_year" type="text" class="form-control"
+                                aria-label="Default" aria-describedby="from_date_year-span" required>
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="from_date_month">Mois : </label>
-                        <input type="text" class="form-control" name="from_date_month" id="from_date_month" required>
+                        <div class="input-group mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="from_date_month-span">Mois</span>
+                            </div>
+                            <input name="from_date_month" id="from_date_month" type="text" class="form-control"
+                                aria-label="Default" aria-describedby="from_date_month-span" required>
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-primary">Valider</button>
                 </form>
@@ -117,14 +153,24 @@
                     <div class="dashboard-element-title">Salaire moyen par genre</div>
                     <form id="form-moy-salary">
                         <div class="form-group">
-                            <label for="moy-salary-from_date">Du :</label>
-                            <input class="form-control" type="text" name="moy-salary-from_date"
-                                id="moy-salary-from_date" autocomplete="off" required>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" id="moy-salary-from_date-span">Date de début</span>
+                                </div>
+                                <input name="moy-salary-from_date" id="moy-salary-from_date" type="text"
+                                    class="form-control" aria-label="Default"
+                                    aria-describedby="moy-salary-from_date-span" required autocomplete="off">
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label for="moy-salary-to_date">Au :</label>
-                            <input class="form-control" type="text" name="moy-salary-to_date" id="moy-salary-to_date"
-                                autocomplete="off" required>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" id="moy-salary-to_date-span">Date de fin</span>
+                                </div>
+                                <input name="moy-salary-to_date" id="moy-salary-to_date" type="text"
+                                    class="form-control" aria-label="Default" aria-describedby="moy-salary-to_date-span"
+                                    required autocomplete="off">
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary">Valider</button>
                     </form>
@@ -136,12 +182,22 @@
                     <div class="dashboard-element-title">Salaire moyen par titre et par ancienneté</div>
                     <form id="form-avg-salary-title-hire-date">
                         <div class="form-group">
-                            <label for="from_date_year2">Année : </label>
-                            <input type="text" class="form-control" name="from_date_year2" id="from_date_year2" required>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" id="from_date_year2-span">Année</span>
+                                </div>
+                                <input name="from_date_year2" id="from_date_year2" type="text" class="form-control"
+                                    aria-label="Default" aria-describedby="from_date_year2-span" required>
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label for="from_date_month2">Mois : </label>
-                            <input type="text" class="form-control" name="from_date_month2" id="from_date_month2" required>
+                            <div class="input-group mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" id="from_date_month2-span">Mois</span>
+                                </div>
+                                <input name="from_date_month2" id="from_date_month2" type="text" class="form-control"
+                                    aria-label="Default" aria-describedby="from_date_month2-span" required>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary">Valider</button>
                     </form>
@@ -150,9 +206,29 @@
             </div>
         </div>
         {%endif%}
-        <div class="dashboard-element">
-            <button id="disconnect" type="button" class="btn btn-danger">Se déconnecter</button>
+
+        {% if name == 'admin'%}
+        <div class="dashboard-group">
+            <div class="dashboard-element" id="db-stats">
+                <div>
+                    <div class="dashboard-element-title">Données statistiques</div>
+                    <form id="form-db-stats">
+                        <button type="submit" class="btn btn-primary">Calculer</button>
+                    </form>
+                </div>
+                <div id="db-stats-result"></div>
+            </div>
+            <div class="dashboard-element" id="sharding-state">
+                <div>
+                    <div class="dashboard-element-title">Etat du sharding</div>
+                    <form id="form-sharding-state">
+                        <button type="submit" class="btn btn-primary">Calculer</button>
+                    </form>
+                </div>
+                <div id="sharding-state-result"></div>
+            </div>
         </div>
+        {%endif%}
     </div>
 </body>
 

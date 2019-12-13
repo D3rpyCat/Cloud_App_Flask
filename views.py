@@ -17,17 +17,20 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-mongo_admin = PyMongo(
+mongo_admin_cloud_app = PyMongo(
     app, uri="mongodb://admin:admin@devincimdb1027.westeurope.cloudapp.azure.com:30000/cloud_app")
-mongo_analyst = PyMongo(
+mongo_admin_admin = PyMongo(
+    app, uri="mongodb://admin:admin@devincimdb1027.westeurope.cloudapp.azure.com:30000/admin")
+
+mongo_analyst_cloud_app = PyMongo(
     app, uri="mongodb://analyst:analyst@devincimdb1027.westeurope.cloudapp.azure.com:30000/cloud_app")
-mongo_user = PyMongo(
+
+mongo_user_cloud_app = PyMongo(
     app, uri="mongodb://user:user@devincimdb1027.westeurope.cloudapp.azure.com:30000/cloud_app")
 
-departments = mongo_admin.db.departments
-employees = mongo_admin.db.employees
-users = mongo_admin.db.users
-
+users = mongo_admin_cloud_app.db.users
+employees = None
+departments = None
 
 class User():
     def __init__(self, pseudo, password):
@@ -110,14 +113,22 @@ def default():
 @app.route('/home/')
 @login_required
 def home():
+    global departments
+    global employees
     if current_user.pseudo == 'user':
+        departments = mongo_user_cloud_app.db.departments
+        employees = mongo_user_cloud_app.db.employees
+
         dept_no_list = departments.find({}, {"dept_no": 1})
         title_list = employees.find().distinct("all_titles.title")
         return render_template('home.html', name=current_user.pseudo, dept_no_list=list(dept_no_list), title_list=list(title_list))
     if current_user.pseudo == 'admin':
+        departments = mongo_admin_cloud_app.db.departments
+        employees = mongo_admin_cloud_app.db.employees_names
         return render_template('home.html', name=current_user.pseudo)
     if current_user.pseudo == 'analyst':
-
+        departments = mongo_analyst_cloud_app.db.departments
+        employees = mongo_analyst_cloud_app.db.employees
         return render_template('home.html', name=current_user.pseudo)
 
 
@@ -312,12 +323,36 @@ def avg_salary_title_hire_date():
             datasets.append(x['_id']['title'])
         values.append({
             "title": x['_id']['title'],
-            "hire_date":label,
-            "moy":x['moy']
+            "hire_date": label,
+            "moy": x['moy']
         })
 
     return dumps({'success': True, "labels": labels, "values": values, "datasets": datasets}), 200, {'ContentType': 'application/json'}
 
+
+@app.route('/admin_db_stats/')
+def db_stats():
+    explain_find_employees = mongo_admin_cloud_app.db.command("explain", {
+        "find": "employees"})
+    explain_find_departments = mongo_admin_cloud_app.db.command("explain", {
+        "find": "departments"})
+    listShards = mongo_admin_admin.db.command("listShards")
+    dbStats = mongo_admin_cloud_app.db.command("dbStats")
+    return dumps({'success': True,
+                  "explain_find_employees": explain_find_employees,
+                  "explain_find_departments": explain_find_departments,
+                  "listShards": listShards,
+                  "dbStats":dbStats}), 200, {'ContentType': 'application/json'}
+
+@app.route('/admin_sharding_state/')
+def sharding_state():
+    dbStats = mongo_admin_cloud_app.db.command("dbStats")
+    labels = []
+    values = []
+    for shard in dbStats['raw']:
+        labels.append(shard[:3])
+        values.append(dbStats['raw'][shard]['objects'])
+    return dumps({'success': True, "labels": labels, "values": values}), 200, {'ContentType': 'application/json'}
 
 if __name__ == "__main__":
     app.run(debug=True)

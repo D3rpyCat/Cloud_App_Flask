@@ -1,4 +1,36 @@
 $(function () {
+    //Configuration des datepicker JqueryUI
+    var dateFormat = "yy/mm/dd"
+    var datepickerOptions = {
+        defaultDate: "+1w",
+        dateFormat: dateFormat,
+        showAnim: "fadeIn",
+        yearRange: "1985:" + new Date().getFullYear().toString(),
+        changeMonth: true,
+        changeYear: true
+    }
+
+    var from = $("#moy-salary-from_date")
+        .datepicker(datepickerOptions)
+        .on("change", function () {
+            to.datepicker("option", "minDate", getDate(this));
+        }),
+        to = $("#moy-salary-to_date").datepicker(datepickerOptions)
+            .on("change", function () {
+                from.datepicker("option", "maxDate", getDate(this));
+            });
+
+    function getDate(element) {
+        var date;
+        try {
+            date = $.datepicker.parseDate(dateFormat, element.value);
+        } catch (error) {
+            date = null;
+        }
+
+        return date;
+    }
+
     $('#form-all-managers').submit(function (e) {
         var formData = {
             'dept_no': $('select[name=dept_no]').val()
@@ -304,8 +336,8 @@ $(function () {
                     var count = 0
                     data.datasets.forEach(function (label) {
                         var data2 = []
-                        data.values.forEach(function(value){
-                            if (value.title == label){
+                        data.values.forEach(function (value) {
+                            if (value.title == label) {
                                 data2.push(value.moy)
                             }
                         })
@@ -358,38 +390,108 @@ $(function () {
         e.preventDefault();
     });
 
+    $('#form-db-stats').submit(function (e) { 
+        var formData = {};
+        $.ajax({
+            type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
+            url: '/admin_db_stats/', // the url where we want to POST
+            data: formData, // our data object
+            dataType: 'json', // what type of data do we expect back from the server
+            encode: true,
+            beforeSend: function () {
+                $('#form-db-stats button').empty()
+                $('#form-db-stats button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
+                $('#db-stats-result').empty()
+            }
+        })
+            // using the done promise callback
+            .done(function (data) {
+                // log data to the console so we can see
+                console.log(data);
+                var explain_find_employees = '<li>Temps de réponse pour employees.find() : '+data.explain_find_employees.executionStats.executionTimeMillis+' ms</li>'
+                var explain_find_departments = '<li>Temps de réponse pour departments.find() : '+data.explain_find_departments.executionStats.executionTimeMillis+' ms</li>'
+                var objects = '<li>Nombre de documents dans la base de données : '+data.dbStats.objects+'</li>'
+                var dataSize = '<li>Taille totale de la base de données : '+data.dbStats.dataSize/10**6+' Mo</li>'
+                var shard_number = '<th id="shard-number" scope="col">#</th>'
+                var shard_name = '<th id="shard-name" scope="col">Nom du shard</th>'
+                var shard_objects = '<th id="shard-objects" scope="col">Documents</th>'
+                var host = '<th id="host" scope="col">Hôte</th>'
+                var thead = '<thead><tr>'+shard_number+shard_name+host+shard_objects+'</tr></thead>'
+                var tbody = '<tbody></tbody>'
+                var table_sharding = '<table id="table-db-stats" class="table">'+thead+tbody+'</table>'
+                var div1 = '<div id="dbStats">'+explain_find_employees+explain_find_departments+objects+dataSize+'</div>'
+                $('#db-stats-result').append(div1)
+                $('#db-stats-result').append(table_sharding)
+                
+                var count = 1
+                data.listShards.shards.forEach(function(shard){
+                    var objects = data.dbStats.raw[shard.host].objects
+                    var shard_info = '<td>'+shard._id+'</td><td>'+shard.host+'</td><td>'+objects+'</td>'
+                    var row = '<tr><th scope="row">'+count+'</th>'+shard_info+'</tr>'
+                    $('#table-db-stats tbody').append(row)
+                    count++
+                })
+                
+                $('#form-db-stats button').remove('span')
+                $('#form-db-stats button').text('Calculer')
+            });
+        e.preventDefault();
+    });
+
+    $('#form-sharding-state').submit(function (e) {
+        var formData = {};
+        $.ajax({
+            type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
+            url: '/admin_sharding_state/', // the url where we want to POST
+            data: formData, // our data object
+            dataType: 'json', // what type of data do we expect back from the server
+            encode: true,
+            beforeSend: function () {
+                $('#form-sharding-state button').empty()
+                $('#form-sharding-state button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
+                $('#sharding-state-result').empty()
+            }
+        })
+            // using the done promise callback
+            .done(function (data) {
+                // log data to the console so we can see
+                console.log(data); 
+                $('#sharding-state-result').append('<canvas id="sharding-state-doughnut"></canvas>')
+                var config = {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: data.values,
+                            backgroundColor: randomColor({ count: data.labels.length, hue: 'blue', luminosity: 'light' }),
+                            label: 'Dataset 1'
+                        }],
+                        labels: data.labels
+                    },
+                    options: {
+                        responsive: true,
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Nombre de documents par shard'
+                        },
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true
+                        }
+                    }
+                };
+                var ctx = document.getElementById('sharding-state-doughnut').getContext('2d');
+			    window.myDoughnut = new Chart(ctx, config);
+
+                $('#form-sharding-state button').remove('span')
+                $('#form-sharding-state button').text('Calculer')
+            });
+        e.preventDefault();
+    });
+
     $('#disconnect').on('click', function () {
         window.location.href = '/logout/'
     });
-
-    var dateFormat = "yy/mm/dd"
-    var datepickerOptions = {
-        defaultDate: "+1w",
-        dateFormat: dateFormat,
-        showAnim: "fadeIn",
-        yearRange: "1985:" + new Date().getFullYear().toString(),
-        changeMonth: true,
-        changeYear: true
-    }
-
-    var from = $("#moy-salary-from_date")
-        .datepicker(datepickerOptions)
-        .on("change", function () {
-            to.datepicker("option", "minDate", getDate(this));
-        }),
-        to = $("#moy-salary-to_date").datepicker(datepickerOptions)
-            .on("change", function () {
-                from.datepicker("option", "maxDate", getDate(this));
-            });
-
-    function getDate(element) {
-        var date;
-        try {
-            date = $.datepicker.parseDate(dateFormat, element.value);
-        } catch (error) {
-            date = null;
-        }
-
-        return date;
-    }
 });
