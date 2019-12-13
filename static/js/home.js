@@ -408,18 +408,20 @@ $(function () {
             .done(function (data) {
                 // log data to the console so we can see
                 console.log(data);
-                var explain_find_employees = '<li>Temps de réponse pour employees.find() : '+data.explain_find_employees.executionStats.executionTimeMillis+' ms</li>'
-                var explain_find_departments = '<li>Temps de réponse pour departments.find() : '+data.explain_find_departments.executionStats.executionTimeMillis+' ms</li>'
-                var objects = '<li>Nombre de documents dans la base de données : '+data.dbStats.objects+'</li>'
-                var dataSize = '<li>Taille totale de la base de données : '+data.dbStats.dataSize/10**6+' Mo</li>'
+                var chunks_employees = '<li>Nombre de chunks pour employees : <b>'+data.collStats_employees.nchunks+'</b></li>'
+                var chunks_departments = '<li>Nombre de chunks pour departments : <b>'+data.collStats_departments.nchunks+'</b></li>'
+                var explain_find_employees = '<li>Temps de réponse pour employees.find() : <b>'+data.explain_find_employees.executionStats.executionTimeMillis+' ms</b></li>'
+                var explain_find_departments = '<li>Temps de réponse pour departments.find() : <b>'+data.explain_find_departments.executionStats.executionTimeMillis+' ms</b></li>'
+                var objects = '<li>Nombre de documents dans la base de données : <b>'+data.dbStats.objects+'</b></li>'
+                var dataSize = '<li>Taille totale de la base de données : <b>'+data.dbStats.dataSize/10**6+' Mo</b></li>'
                 var shard_number = '<th id="shard-number" scope="col">#</th>'
-                var shard_name = '<th id="shard-name" scope="col">Nom du shard</th>'
+                var shard_name = '<th id="shard-name" scope="col">Shard</th>'
                 var shard_objects = '<th id="shard-objects" scope="col">Documents</th>'
                 var host = '<th id="host" scope="col">Hôte</th>'
                 var thead = '<thead><tr>'+shard_number+shard_name+host+shard_objects+'</tr></thead>'
                 var tbody = '<tbody></tbody>'
                 var table_sharding = '<table id="table-db-stats" class="table">'+thead+tbody+'</table>'
-                var div1 = '<div id="dbStats">'+explain_find_employees+explain_find_departments+objects+dataSize+'</div>'
+                var div1 = '<div id="dbStats">'+chunks_employees+chunks_departments+explain_find_employees+explain_find_departments+objects+dataSize+'</div>'
                 $('#db-stats-result').append(div1)
                 $('#db-stats-result').append(table_sharding)
                 

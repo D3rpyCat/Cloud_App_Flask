@@ -1,5 +1,5 @@
 body {
-    background: #f0f0f0 !important;
+    background: #d4f3ff !important;
 }
 
 form {
@@ -55,10 +55,6 @@ form {
     display: flex;
     flex-direction: column;
     width: 50%;
-}
-
-#moy-salary-result{
-    height:500px
 }
 
 #db-stats-result {

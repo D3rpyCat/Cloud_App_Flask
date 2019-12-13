@@ -338,11 +338,15 @@ def db_stats():
         "find": "departments"})
     listShards = mongo_admin_admin.db.command("listShards")
     dbStats = mongo_admin_cloud_app.db.command("dbStats")
+    collStats_employees =  mongo_admin_cloud_app.db.command("collStats","employees")
+    collStats_departments =  mongo_admin_cloud_app.db.command("collStats","departments")
     return dumps({'success': True,
                   "explain_find_employees": explain_find_employees,
                   "explain_find_departments": explain_find_departments,
                   "listShards": listShards,
-                  "dbStats":dbStats}), 200, {'ContentType': 'application/json'}
+                  "dbStats":dbStats,
+                  "collStats_employees":collStats_employees,
+                  "collStats_departments":collStats_departments}), 200, {'ContentType': 'application/json'}
 
 @app.route('/admin_sharding_state/')
 def sharding_state():
