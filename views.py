@@ -13,10 +13,12 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'NAM4BwQqes3vc84tThTk'
 
+# LoginManager pour la gestion des connexions
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# Différentes connexions MongoDB utilisées
 mongo_admin_cloud_app = PyMongo(
     app, uri="mongodb://admin:admin@devincimdb1027.westeurope.cloudapp.azure.com:30000/cloud_app")
 mongo_admin_admin = PyMongo(
@@ -28,10 +30,14 @@ mongo_analyst_cloud_app = PyMongo(
 mongo_user_cloud_app = PyMongo(
     app, uri="mongodb://user:user@devincimdb1027.westeurope.cloudapp.azure.com:30000/cloud_app")
 
+# On ne définit que la collection users comme étant un accès en tant qu'admin
+# Les 2 autres collections dépendent de l'utilisateur qui se connecte
+# Ex : si c'est user (standard), on prendra mongo_user_cloud_app, car il n'a que le rôle readWrite
 users = mongo_admin_cloud_app.db.users
 employees = None
 departments = None
 
+# Classe User utilisée par flask-login pour le système d'authentification
 class User():
     def __init__(self, pseudo, password):
         self.pseudo = pseudo
@@ -59,7 +65,7 @@ def load_user(user_id):
     user_db = users.find_one({'pseudo': user_id})
     return User(user_db['pseudo'], user_db['password'])
 
-
+# Vérifie l'intégrité des formulaires de login
 class RegForm(FlaskForm):
     pseudo = StringField('pseudo',  validators=[InputRequired(), Length(
         max=30, message="Veuillez entrer un pseudo de moins de %(max)d caractères.")])
@@ -73,11 +79,15 @@ def register():
     if request.method == 'POST':
         if form.validate():
             existing_user = users.find_one({"pseudo": form.pseudo.data})
+            # Si l'utilisateur à créer n'existe pas dans la collection users
             if existing_user is None:
+                # On hash son mot de passe en sha256
                 hashpass = generate_password_hash(
                     form.password.data, method='sha256')
+                # On l'ajoute à la collection
                 users.insert_one(
                     {"pseudo": form.pseudo.data, "password": hashpass})
+                # On le log in directement et on le redirige sur l'accueil /home/
                 login_user(User(form.pseudo.data, hashpass))
                 return redirect(url_for('home'))
     return render_template('register.html', form=form)
@@ -91,7 +101,9 @@ def login():
     if request.method == 'POST':
         if form.validate():
             check_user = users.find_one({"pseudo": form.pseudo.data})
+            # Si l'utilisateur qui souhaite se logger est bien présent dans la collection users
             if check_user:
+                #On compare le sha256 du mot de passe entré dans le formulaire avec celui présent dans la collection
                 if check_password_hash(check_user['password'], form.password.data):
                     login_user(User(form.pseudo.data, form.password.data))
                     return redirect(url_for('home'))
@@ -113,12 +125,18 @@ def default():
 @app.route('/home/')
 @login_required
 def home():
+    # Comme la page d'accueil est la première vue auquel on accède, 
+    # on se permet de modifier dans cette fonction les variables globales departments et employees
+    # en fonction du pseudo de l'utilisateur courant
+    # (Il aurait été mieux de le faire avec des rôles définis pour chaque utilisateur, plus sécurisé)
+    
     global departments
     global employees
     if current_user.pseudo == 'user':
         departments = mongo_user_cloud_app.db.departments
         employees = mongo_user_cloud_app.db.employees
 
+        # Liste des dept_no et des titres à afficher dans les select de home.html (ils seront affichés par le moteur de template Jinja2)
         dept_no_list = departments.find({}, {"dept_no": 1})
         title_list = employees.find().distinct("all_titles.title")
         return render_template('home.html', name=current_user.pseudo, dept_no_list=list(dept_no_list), title_list=list(title_list))
@@ -132,12 +150,17 @@ def home():
         return render_template('home.html', name=current_user.pseudo)
 
 
+# ROUTES POUR LE TABLEAU DE BORD D'UN UTILISATEUR STANDARD
+
 @app.route('/all_managers/')
 def all_managers():
-    # all_managers
+    # Tous les managers d'un département
+
+    # On récupère le paramètre de la requête GET
     if request.method == 'GET' and request.args.get('dept_no') != None:
         dept_no = request.args.get('dept_no')
     else:
+        # Sinon par défaut on prend le premier dept_no existant dans la collection departments
         dept_no = departments.find_one({}, {"dept_no": 1})['dept_no']
     departments_list = departments.aggregate(
         [{	"$match": {"dept_no": str(dept_no)}},
@@ -164,17 +187,22 @@ def all_managers():
         for result in results:
             employees_names.append(result)
 
+    # On renvoit le json avec les données de retour, un status code 200 et un ContentType à la requête Ajax   
     return dumps({'success': True, "employees_names": list(employees_names)}), 200, {'ContentType': 'application/json'}
 
 
 @app.route('/all_employees/')
 def all_employees():
-    title_list = employees.find().distinct("all_titles.title")
+    # Tous les collaborateurs d'un département avec un certain titre
 
+    title_list = employees.find().distinct("all_titles.title")
+    # On récupère les paramètres de la requête GET
     if request.method == 'GET' and request.args.get('dept_no2') != None and request.args.get('title') != None:
         dept_no2 = request.args.get('dept_no2')
         title = request.args.get('title')
     else:
+        # Sinon par défaut on prend le premier dept_no existant dans la collection departments
+        # Idem pour le titre
         dept_no2 = departments.find_one({}, {"dept_no": 1})['dept_no']
         title = title_list[0]
 
@@ -187,18 +215,25 @@ def all_employees():
     for emp in dept_employees:
         dept_employees_names.append(emp)
 
+    # On renvoit le json avec les données de retour, un status code 200 et un ContentType à la requête Ajax   
     return dumps({'success': True, "dept_employees_names": list(dept_employees_names)}), 200, {'ContentType': 'application/json'}
 
 
 @app.route('/all_salaries/')
 def all_salaries():
+    # Tous les salaires d'un employé (selon son emp_no)
+
     emp_emp_no = 0
+    # On récupère le paramètre de la requête GET
     if request.method == 'GET' and request.args.get('emp_emp_no') != None:
         emp_emp_no = request.args.get('emp_emp_no')
+
     salaries_list = employees.aggregate(
         [{	"$match": {"emp_no": int(emp_emp_no)}},
             {	"$unwind": {"path": "$all_salaries"}},
             {"$project": {"all_salaries": 1.0}}])
+
+    # On renvoit labels et values qui vont servir pour le graphique Chart.js (cf. home.js)       
     labels = []
     values = []
     for s in salaries_list:
@@ -209,11 +244,15 @@ def all_salaries():
         labels.append("["+from_date + " - "+to_date+"]")
         values.append(s['all_salaries']['salary'])
 
+    # On renvoit le json avec les données de retour, un status code 200 et un ContentType à la requête Ajax   
     return dumps({'success': True, "labels": labels, "values": values}), 200, {'ContentType': 'application/json'}
 
 
 @app.route('/dept_titles_date/')
 def dept_titles_date():
+    # Nombre d'employés ayant rejoint le département choisi par date et par titre, sur une période d'un mois dans une année
+
+    # On récupère les paramètres de la requête GET
     if request.method == 'GET' and request.args.get('dept_no3') != None and request.args.get('from_date_year') != None and request.args.get('from_date_month') != None:
         dept_no3 = request.args.get('dept_no3')
         from_date_year = request.args.get('from_date_year')
@@ -241,6 +280,8 @@ def dept_titles_date():
             {"$sort": {"_id": 1}},
             {"$project": {"titles": 1}}
          ])
+
+    # On renvoit labels, values et datasets qui vont servir pour le graphique Chart.js (cf. home.js)         
     labels = []
     values = {}
     datasets = []
@@ -251,12 +292,16 @@ def dept_titles_date():
             if title['title'] not in datasets:
                 datasets.append(title['title'])
 
+    # On renvoit le json avec les données de retour, un status code 200 et un ContentType à la requête Ajax    
     return dumps({'success': True, "labels": labels, "values": values, "datasets": datasets}), 200, {'ContentType': 'application/json'}
 
+# ROUTES POUR LE TABLEAU DE BORD D'UN ANALYSTE
 
 @app.route('/moy_salaire/')
 def moy_salaire():
-    # moy_salary
+    # Moyenne des salaires par genre sur une période spécifiée par l'utilisateur
+
+    # On récupère les paramètres de la requête GET
     if request.method == 'GET' and request.args.get('from_date') != None and request.args.get('to_date') != None:
         from_date = request.args.get('from_date')
         to_date = request.args.get('to_date')
@@ -275,16 +320,21 @@ def moy_salaire():
     result = employees.map_reduce(
         map_moy_salary, reduce_moy_salary, out="result").find()
 
+    # On renvoit labels et values qui vont servir pour le graphique Chart.js (cf. home.js)   
     labels = ['M', 'F']
     values = []
     for res in result:
         values.append(res['value'])
 
+    # On renvoit le json avec les données de retour, un status code 200 et un ContentType à la requête Ajax   
     return dumps({'success': True, "labels": labels, "values": values}), 200, {'ContentType': 'application/json'}
 
 
 @app.route('/avg_salary_title_hire_date/')
 def avg_salary_title_hire_date():
+    # Moyennes des salaires par titre et par date d'ancienneté pour une période longue d'un mois dans une année
+
+    # On récupère les paramètres de la requête GET
     if request.method == 'GET' and request.args.get('from_date_year') != None and request.args.get('from_date_month') != None:
         from_date_year = request.args.get('from_date_year')
         from_date_month = request.args.get('from_date_month')
@@ -312,6 +362,7 @@ def avg_salary_title_hire_date():
         }
     }])
 
+    # On renvoit labels,values et datasets qui vont servir pour le graphique Chart.js (cf. home.js)   
     labels = []
     values = []
     datasets = []
@@ -327,19 +378,30 @@ def avg_salary_title_hire_date():
             "moy": x['moy']
         })
 
+    # On renvoit le json avec les données de retour, un status code 200 et un ContentType à la requête Ajax
     return dumps({'success': True, "labels": labels, "values": values, "datasets": datasets}), 200, {'ContentType': 'application/json'}
 
+# ROUTES POUR LE TABLEAU DE BORD D'UN ADMINISTRATEUR
 
 @app.route('/admin_db_stats/')
 def db_stats():
+    # Statistiques sur la base de données cloud_app et les collections
+
     explain_find_employees = mongo_admin_cloud_app.db.command("explain", {
         "find": "employees"})
+
     explain_find_departments = mongo_admin_cloud_app.db.command("explain", {
         "find": "departments"})
+
     listShards = mongo_admin_admin.db.command("listShards")
+
     dbStats = mongo_admin_cloud_app.db.command("dbStats")
+
     collStats_employees =  mongo_admin_cloud_app.db.command("collStats","employees")
+
     collStats_departments =  mongo_admin_cloud_app.db.command("collStats","departments")
+
+    # On renvoit le json avec les données de retour, un status code 200 et un ContentType à la requête Ajax
     return dumps({'success': True,
                   "explain_find_employees": explain_find_employees,
                   "explain_find_departments": explain_find_departments,
@@ -350,12 +412,18 @@ def db_stats():
 
 @app.route('/admin_sharding_state/')
 def sharding_state():
+    # Etat du sharding sur cloud_app
+
     dbStats = mongo_admin_cloud_app.db.command("dbStats")
+
+    # On renvoit labels et values qui vont servir pour le graphique Chart.js (cf. home.js)   
     labels = []
     values = []
     for shard in dbStats['raw']:
         labels.append(shard[:3])
         values.append(dbStats['raw'][shard]['objects'])
+
+    # On renvoit le json avec les données de retour, un status code 200 et un ContentType à la requête Ajax        
     return dumps({'success': True, "labels": labels, "values": values}), 200, {'ContentType': 'application/json'}
 
 if __name__ == "__main__":

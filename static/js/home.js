@@ -10,16 +10,6 @@ $(function () {
         changeYear: true
     }
 
-    var from = $("#moy-salary-from_date")
-        .datepicker(datepickerOptions)
-        .on("change", function () {
-            to.datepicker("option", "minDate", getDate(this));
-        }),
-        to = $("#moy-salary-to_date").datepicker(datepickerOptions)
-            .on("change", function () {
-                from.datepicker("option", "maxDate", getDate(this));
-            });
-
     function getDate(element) {
         var date;
         try {
@@ -31,25 +21,37 @@ $(function () {
         return date;
     }
 
+    //Pour la moyenne des salaires par genre pour la vue Analyst, on ne veut pas que la date de fin puisse être avant la date de début
+    var from = $("#moy-salary-from_date")
+        .datepicker(datepickerOptions)
+        .on("change", function () {
+            to.datepicker("option", "minDate", getDate(this));
+        }),
+        to = $("#moy-salary-to_date").datepicker(datepickerOptions)
+            .on("change", function () {
+                from.datepicker("option", "maxDate", getDate(this));
+            });
+
+    // GESTION DES SUBMITS POUR CHAQUE FORMULAIRE
+
     $('#form-all-managers').submit(function (e) {
         var formData = {
             'dept_no': $('select[name=dept_no]').val()
         };
+
         $.ajax({
-            type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
-            url: '/all_managers/', // the url where we want to POST
-            data: formData, // our data object
-            dataType: 'json', // what type of data do we expect back from the server
+            type: 'GET',
+            url: '/all_managers/',
+            data: formData,
+            dataType: 'json',
             encode: true,
             beforeSend: function () {
+                //On affiche un spinner sur le bouton de submit, pour signifier que le serveur est en train de récupérer les données
                 $('#form-all-managers button').empty()
                 $('#form-all-managers button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
             }
         })
-            // using the done promise callback
             .done(function (data) {
-
-                // log data to the console so we can see
                 console.log(data);
 
                 $('#all-managers-result').empty()
@@ -60,6 +62,7 @@ $(function () {
                 $('#form-all-managers button').remove('span')
                 $('#form-all-managers button').text('Valider')
             });
+        //Empêcher le comportement par défaut du <form> qui rafraîchit la page après submit
         e.preventDefault();
     });
 
@@ -68,22 +71,24 @@ $(function () {
             'dept_no2': $('select[name=dept_no2]').val(),
             'title': $('select[name=title]').val()
         };
+
         $.ajax({
-            type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
-            url: '/all_employees/', // the url where we want to POST
-            data: formData, // our data object
-            dataType: 'json', // what type of data do we expect back from the server
+            type: 'GET',
+            url: '/all_employees/',
+            data: formData,
+            dataType: 'json',
             encode: true,
             beforeSend: function () {
                 $('#all-employees-result').empty()
+
+                //On affiche un spinner sur le bouton de submit, pour signifier que le serveur est en train de récupérer les données
                 $('#form-all-employees button').empty()
                 $('#form-all-employees button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
             }
         })
-            // using the done promise callback
             .done(function (data) {
-                // log data to the console so we can see
                 console.log(data);
+
                 if (data.dept_employees_names.length > 0) {
                     data.dept_employees_names.forEach(element => {
                         $('#all-employees-result').append('<li>' + element.first_name + ' ' + element.last_name + '</li>')
@@ -96,6 +101,7 @@ $(function () {
                 $('#form-all-employees button').remove('span')
                 $('#form-all-employees button').text('Valider')
             });
+        //Empêcher le comportement par défaut du <form> qui rafraîchit la page après submit
         e.preventDefault();
     });
 
@@ -103,24 +109,27 @@ $(function () {
         var formData = {
             'emp_emp_no': $('input[name=emp_emp_no]').val()
         };
+
         $.ajax({
-            type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
-            url: '/all_salaries/', // the url where we want to POST
-            data: formData, // our data object
-            dataType: 'json', // what type of data do we expect back from the server
+            type: 'GET',
+            url: '/all_salaries/',
+            data: formData,
+            dataType: 'json',
             encode: true,
             beforeSend: function () {
+                //On affiche un spinner sur le bouton de submit, pour signifier que le serveur est en train de récupérer les données
                 $('#form-all-salaries button').empty()
                 $('#form-all-salaries button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
+
                 $('#all-salaries-result').empty()
             }
         })
-            // using the done promise callback
             .done(function (data) {
-                // log data to the console so we can see
                 console.log(data);
                 if (data.labels.length > 0 && data.values.length > 0) {
                     $('#all-salaries-result').append('<canvas id="all-salaries-bar-chart"></canvas>')
+
+                    //Définition des paramètres de l'histogramme Chart.js
                     var barChartData = {
                         labels: data.labels,
                         datasets: [{
@@ -130,6 +139,7 @@ $(function () {
                             data: data.values
                         }]
                     };
+
                     var ctx = document.getElementById('all-salaries-bar-chart').getContext('2d');
                     window.myBar = new Chart(ctx, {
                         type: 'bar',
@@ -152,9 +162,11 @@ $(function () {
                 else {
                     $('#all-salaries-result').append('Pas de résultats')
                 }
+
                 $('#form-all-salaries button').remove('span')
                 $('#form-all-salaries button').text('Valider')
             });
+        //Empêcher le comportement par défaut du <form> qui rafraîchit la page après submit
         e.preventDefault();
     });
 
@@ -164,28 +176,31 @@ $(function () {
             'from_date_year': $('input[name=from_date_year]').val(),
             'from_date_month': $('input[name=from_date_month]').val()
         };
+
         $.ajax({
-            type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
-            url: '/dept_titles_date/', // the url where we want to POST
-            data: formData, // our data object
-            dataType: 'json', // what type of data do we expect back from the server
+            type: 'GET',
+            url: '/dept_titles_date/',
+            data: formData,
+            dataType: 'json',
             encode: true,
             beforeSend: function () {
+                //On affiche un spinner sur le bouton de submit, pour signifier que le serveur est en train de récupérer les données
                 $('#form-dept-titles button').empty()
                 $('#form-dept-titles button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
+
                 $('#dept-titles-result').empty()
             }
         })
-            // using the done promise callback
             .done(function (data) {
-                // log data to the console so we can see
                 console.log(data);
                 if (data.labels.length > 0) {
                     $('#dept-titles-result').append('<canvas id="dept-titles-bar-chart"></canvas>')
-                    var colors = randomColor({ count: data.datasets.length, hue: 'blue', luminosity: 'light' })
 
+                    //Définition des paramètres de l'histogramme empilé Chart.js
+                    var colors = randomColor({ count: data.datasets.length, hue: 'blue', luminosity: 'light' })
                     var datasets = []
                     var count = 0
+
                     data.datasets.forEach(function (label) {
                         var data2 = []
                         for (var key in data.values) {
@@ -203,10 +218,12 @@ $(function () {
                         count++
                         datasets.push(dataset)
                     })
+
                     var barChartData = {
                         labels: data.labels,
                         datasets: datasets
                     };
+
                     var ctx = document.getElementById('dept-titles-bar-chart').getContext('2d');
                     window.myBar = new Chart(ctx, {
                         type: 'bar',
@@ -238,9 +255,11 @@ $(function () {
                 else {
                     $('#dept-titles-result').append('Pas de résultats')
                 }
+
                 $('#form-dept-titles button').remove('span')
                 $('#form-dept-titles button').text('Valider')
             });
+        //Empêcher le comportement par défaut du <form> qui rafraîchit la page après submit
         e.preventDefault();
     });
 
@@ -249,25 +268,28 @@ $(function () {
             'from_date': $('input[name=moy-salary-from_date]').val(),
             'to_date': $('input[name=moy-salary-to_date]').val()
         };
+
         $.ajax({
-            type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
-            url: '/moy_salaire/', // the url where we want to POST
-            data: formData, // our data object
-            dataType: 'json', // what type of data do we expect back from the server
+            type: 'GET',
+            url: '/moy_salaire/',
+            data: formData,
+            dataType: 'json',
             encode: true,
             beforeSend: function () {
+                //On affiche un spinner sur le bouton de submit, pour signifier que le serveur est en train de récupérer les données
                 $('#form-moy-salary button').empty()
                 $('#form-moy-salary button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
+                
                 $('#moy-salary-result').empty()
             }
         })
-            // using the done promise callback
             .done(function (data) {
-
-                // log data to the console so we can see
                 console.log(data);
+
                 if (data.labels.length > 0 && data.values.length > 0) {
                     $('#moy-salary-result').append('<canvas id="moy-salary-doughnut"></canvas>')
+
+                    //Définition des paramètres du doughnut Chart.js
                     var config = {
                         type: 'doughnut',
                         data: {
@@ -304,6 +326,7 @@ $(function () {
                 $('#form-moy-salary button').remove('span')
                 $('#form-moy-salary button').text('Valider')
             });
+        //Empêcher le comportement par défaut du <form> qui rafraîchit la page après submit
         e.preventDefault();
     });
 
@@ -313,27 +336,30 @@ $(function () {
             'from_date_month': $('input[name=from_date_month2]').val()
         };
         $.ajax({
-            type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
-            url: '/avg_salary_title_hire_date/', // the url where we want to POST
-            data: formData, // our data object
-            dataType: 'json', // what type of data do we expect back from the server
+            type: 'GET',
+            url: '/avg_salary_title_hire_date/',
+            data: formData, 
+            dataType: 'json',
             encode: true,
             beforeSend: function () {
+                //On affiche un spinner sur le bouton de submit, pour signifier que le serveur est en train de récupérer les données
                 $('#form-avg-salary-title-hire-date button').empty()
                 $('#form-avg-salary-title-hire-date button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
+                
                 $('#avg-salary-title-hire-date-result').empty()
             }
         })
-            // using the done promise callback
             .done(function (data) {
-                // log data to the console so we can see
                 console.log(data);
+
                 if (data.labels.length > 0) {
                     $('#avg-salary-title-hire-date-result').append('<canvas id="avg-salary-title-hire-date-bar-chart"></canvas>')
-                    var colors = randomColor({ count: data.datasets.length, hue: 'blue', luminosity: 'light' })
 
+                    //Définition des paramètres de l'histogramme empilé Chart.js
+                    var colors = randomColor({ count: data.datasets.length, hue: 'blue', luminosity: 'light' })
                     var datasets = []
                     var count = 0
+
                     data.datasets.forEach(function (label) {
                         var data2 = []
                         data.values.forEach(function (value) {
@@ -349,10 +375,12 @@ $(function () {
                         count++
                         datasets.push(dataset)
                     })
+
                     var barChartData = {
                         labels: data.labels,
                         datasets: datasets
                     };
+
                     var ctx = document.getElementById('avg-salary-title-hire-date-bar-chart').getContext('2d');
                     window.myBar = new Chart(ctx, {
                         type: 'bar',
@@ -384,81 +412,92 @@ $(function () {
                 else {
                     $('#avg-salary-title-hire-date').append('Pas de résultats')
                 }
+                
                 $('#form-avg-salary-title-hire-date button').remove('span')
                 $('#form-avg-salary-title-hire-date button').text('Valider')
             });
+        //Empêcher le comportement par défaut du <form> qui rafraîchit la page après submit
         e.preventDefault();
     });
 
-    $('#form-db-stats').submit(function (e) { 
+    $('#form-db-stats').submit(function (e) {
         var formData = {};
+
         $.ajax({
-            type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
-            url: '/admin_db_stats/', // the url where we want to POST
-            data: formData, // our data object
-            dataType: 'json', // what type of data do we expect back from the server
+            type: 'GET',
+            url: '/admin_db_stats/',
+            data: formData,
+            dataType: 'json',
             encode: true,
             beforeSend: function () {
+                //On affiche un spinner sur le bouton de submit, pour signifier que le serveur est en train de récupérer les données
                 $('#form-db-stats button').empty()
                 $('#form-db-stats button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
+                
                 $('#db-stats-result').empty()
             }
         })
-            // using the done promise callback
             .done(function (data) {
-                // log data to the console so we can see
                 console.log(data);
-                var chunks_employees = '<li>Nombre de chunks pour employees : <b>'+data.collStats_employees.nchunks+'</b></li>'
-                var chunks_departments = '<li>Nombre de chunks pour departments : <b>'+data.collStats_departments.nchunks+'</b></li>'
-                var explain_find_employees = '<li>Temps de réponse pour employees.find() : <b>'+data.explain_find_employees.executionStats.executionTimeMillis+' ms</b></li>'
-                var explain_find_departments = '<li>Temps de réponse pour departments.find() : <b>'+data.explain_find_departments.executionStats.executionTimeMillis+' ms</b></li>'
-                var objects = '<li>Nombre de documents dans la base de données : <b>'+data.dbStats.objects+'</b></li>'
-                var dataSize = '<li>Taille totale de la base de données : <b>'+data.dbStats.dataSize/10**6+' Mo</b></li>'
+
+                //Construction de tous les éléments HTML à afficher en utilisant les données renvoyées par la requête GET, qu'on va ajouter en jQuery à l'élément du tableau de bord
+                var chunks_employees = '<li>Nombre de chunks pour employees : <b>' + data.collStats_employees.nchunks + '</b></li>'
+                var chunks_departments = '<li>Nombre de chunks pour departments : <b>' + data.collStats_departments.nchunks + '</b></li>'
+                var explain_find_employees = '<li>Temps de réponse pour employees.find() : <b>' + data.explain_find_employees.executionStats.executionTimeMillis + ' ms</b></li>'
+                var explain_find_departments = '<li>Temps de réponse pour departments.find() : <b>' + data.explain_find_departments.executionStats.executionTimeMillis + ' ms</b></li>'
+                var objects = '<li>Nombre de documents dans la base de données : <b>' + data.dbStats.objects + '</b></li>'
+                var dataSize = '<li>Taille totale de la base de données : <b>' + data.dbStats.dataSize / 10 ** 6 + ' Mo</b></li>'
                 var shard_number = '<th id="shard-number" scope="col">#</th>'
                 var shard_name = '<th id="shard-name" scope="col">Shard</th>'
                 var shard_objects = '<th id="shard-objects" scope="col">Documents</th>'
                 var host = '<th id="host" scope="col">Hôte</th>'
-                var thead = '<thead><tr>'+shard_number+shard_name+host+shard_objects+'</tr></thead>'
+                var thead = '<thead><tr>' + shard_number + shard_name + host + shard_objects + '</tr></thead>'
                 var tbody = '<tbody></tbody>'
-                var table_sharding = '<table id="table-db-stats" class="table">'+thead+tbody+'</table>'
-                var div1 = '<div id="dbStats">'+chunks_employees+chunks_departments+explain_find_employees+explain_find_departments+objects+dataSize+'</div>'
+                var table_sharding = '<table id="table-db-stats" class="table">' + thead + tbody + '</table>'
+                var div1 = '<div id="dbStats">' + chunks_employees + chunks_departments + explain_find_employees + explain_find_departments + objects + dataSize + '</div>'
                 $('#db-stats-result').append(div1)
                 $('#db-stats-result').append(table_sharding)
-                
+
                 var count = 1
-                data.listShards.shards.forEach(function(shard){
+
+                data.listShards.shards.forEach(function (shard) {
                     var objects = data.dbStats.raw[shard.host].objects
-                    var shard_info = '<td>'+shard._id+'</td><td>'+shard.host+'</td><td>'+objects+'</td>'
-                    var row = '<tr><th scope="row">'+count+'</th>'+shard_info+'</tr>'
+                    var shard_info = '<td>' + shard._id + '</td><td>' + shard.host + '</td><td>' + objects + '</td>'
+                    var row = '<tr><th scope="row">' + count + '</th>' + shard_info + '</tr>'
                     $('#table-db-stats tbody').append(row)
                     count++
                 })
-                
+
                 $('#form-db-stats button').remove('span')
                 $('#form-db-stats button').text('Calculer')
             });
+        //Empêcher le comportement par défaut du <form> qui rafraîchit la page après submit
         e.preventDefault();
     });
 
     $('#form-sharding-state').submit(function (e) {
         var formData = {};
+
         $.ajax({
-            type: 'GET', // define the type of HTTP verb we want to use (POST for our form)
-            url: '/admin_sharding_state/', // the url where we want to POST
-            data: formData, // our data object
-            dataType: 'json', // what type of data do we expect back from the server
+            type: 'GET',
+            url: '/admin_sharding_state/',
+            data: formData,
+            dataType: 'json',
             encode: true,
             beforeSend: function () {
+                //On affiche un spinner sur le bouton de submit, pour signifier que le serveur est en train de récupérer les données
                 $('#form-sharding-state button').empty()
                 $('#form-sharding-state button').append('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span><span class="sr-only">Loading...</span>')
+                
                 $('#sharding-state-result').empty()
             }
         })
-            // using the done promise callback
             .done(function (data) {
-                // log data to the console so we can see
-                console.log(data); 
+                console.log(data);
+
                 $('#sharding-state-result').append('<canvas id="sharding-state-doughnut"></canvas>')
+
+                //Définition des paramètres du doughnut Chart.js
                 var config = {
                     type: 'doughnut',
                     data: {
@@ -484,12 +523,14 @@ $(function () {
                         }
                     }
                 };
+
                 var ctx = document.getElementById('sharding-state-doughnut').getContext('2d');
-			    window.myDoughnut = new Chart(ctx, config);
+                window.myDoughnut = new Chart(ctx, config);
 
                 $('#form-sharding-state button').remove('span')
                 $('#form-sharding-state button').text('Calculer')
             });
+        //Empêcher le comportement par défaut du <form> qui rafraîchit la page après submit   
         e.preventDefault();
     });
 
